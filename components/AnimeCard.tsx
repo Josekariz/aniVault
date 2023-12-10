@@ -1,6 +1,5 @@
 import Image from "next/image";
 
-import { motion } from "framer-motion"
 import { MotionDiv } from './MotionDiv';
 
 export interface AnimeProp {
@@ -26,14 +25,14 @@ const variants = {
   
 }
 
-function AnimeCard({ anime }: Prop) {
+function AnimeCard({ anime, index }: Prop) {
   return (
     <MotionDiv className="max-w-sm rounded relative w-full"
       variants={variants}
       initial = "hidden"
       animate = "visible"
       transition={{
-        delay: 1,
+        delay: index * 0.25,
         ease: "easeInOut",
         duration: 0.5,
 
