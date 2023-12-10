@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { motion } from "framer-motion"
+import { MotionDiv } from './MotionDiv';
 
 export interface AnimeProp {
   id: string;
@@ -27,7 +28,7 @@ const variants = {
 
 function AnimeCard({ anime }: Prop) {
   return (
-    <motion.div className="max-w-sm rounded relative w-full"
+    <MotionDiv className="max-w-sm rounded relative w-full"
       variants={variants}
       initial = "hidden"
       animate = "visible"
@@ -83,7 +84,7 @@ function AnimeCard({ anime }: Prop) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 }
 
