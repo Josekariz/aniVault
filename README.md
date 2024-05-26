@@ -4,14 +4,12 @@
 
 
 ## Overview
+AnimeVault is a feature-rich web application designed to provide an immersive experience for anime enthusiasts. Leveraging the latest advancements in Next.js 14, this project showcases the implementation of:
 
-Welcome to the AnimeVault Web App project! In this repository, you'll find the code and resources to accompany the video tutorial that demystifies Server Actions, Infinite Scrolling, and Framer Motion Animations with Next.js 14. This tutorial will guide you through the process of building a server-side Next.js 14 app for AnimeVault.
-
-## Video Tutorial
-
-Check out the accompanying video tutorial to follow along with the development process:
-
-[![AnimeVault Web App Tutorial](link_to_your_video_thumbnail)](link_to_your_video)
+Server Actions: Efficiently handle server-side logic and data fetching.
+Infinite Scrolling: Seamlessly load more content as users scroll, enhancing the user experience.
+Framer Motion Animations: Add smooth and interactive animations to create a dynamic and engaging interface.
+This project is perfect for developers looking to deepen their understanding of Next.js 14 and its powerful features. Follow along with the tutorial to build your own AnimeVault Web App from scratch, and explore the possibilities of modern web development.
 
 ## Prerequisites
 
