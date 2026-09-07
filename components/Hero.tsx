@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { MotionDiv } from "@/components/MotionDiv";
-import { shikimoriImageUrl } from "@/lib/shikimori";
+import { formatScoreOutOfTen } from "@/lib/anilist/format";
 import type { AnimeListItem } from "@/types/anime";
 
 interface HeroProps {
@@ -12,6 +12,9 @@ interface HeroProps {
 }
 
 function Hero({ featured }: HeroProps) {
+  const score = featured ? formatScoreOutOfTen(featured.averageScore) : null;
+  const cover = featured?.coverImage || "/anime.png";
+
   return (
     <header className="relative overflow-hidden">
       <div className="absolute inset-0 bg-hero bg-cover bg-center" />
@@ -59,7 +62,7 @@ function Hero({ featured }: HeroProps) {
                 href={`/anime/${featured.id}`}
                 className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                Featured: {featured.name}
+                Featured: {featured.displayTitle}
               </Link>
             ) : null}
           </div>
@@ -77,8 +80,8 @@ function Hero({ featured }: HeroProps) {
               className="group relative block aspect-[3/4] overflow-hidden rounded-[1.75rem] bg-white/10 shadow-soft ring-1 ring-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <Image
-                src={shikimoriImageUrl(featured.image?.original)}
-                alt={featured.name}
+                src={cover}
+                alt={featured.displayTitle}
                 fill
                 priority
                 sizes="(max-width: 1024px) 90vw, 420px"
@@ -90,13 +93,11 @@ function Hero({ featured }: HeroProps) {
                   Trending now
                 </p>
                 <p className="font-display text-2xl font-semibold text-white">
-                  {featured.name}
+                  {featured.displayTitle}
                 </p>
                 <p className="text-sm text-white/65">
-                  {featured.kind ?? "Anime"}
-                  {featured.score && featured.score !== "0.0"
-                    ? ` · ${featured.score}`
-                    : ""}
+                  {featured.format?.replace(/_/g, " ") ?? "Anime"}
+                  {score ? ` · ${score}` : ""}
                 </p>
               </div>
             </Link>

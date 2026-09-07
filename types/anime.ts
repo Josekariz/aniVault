@@ -1,114 +1,91 @@
-export interface ShikimoriImage {
-  original: string;
-  preview: string;
-  x96: string;
-  x48: string;
+/** AniList title object — display via `getDisplayTitle` / `displayTitle`. */
+export interface AnimeTitle {
+  romaji: string | null;
+  english: string | null;
+  native: string | null;
 }
 
-/** Compact anime object returned by list/search/similar endpoints. */
+export interface FuzzyDate {
+  year: number | null;
+  month: number | null;
+  day: number | null;
+}
+
+export interface AnimeTrailer {
+  id: string | null;
+  site: string | null;
+  thumbnail: string | null;
+}
+
+/** Compact anime used in grids, search, relations, and recommendations. */
 export interface AnimeListItem {
   id: number;
-  name: string;
-  russian: string | null;
-  image: ShikimoriImage;
-  url: string;
-  kind: string | null;
-  score: string;
+  title: AnimeTitle;
+  /** english ?? romaji ?? native */
+  displayTitle: string;
+  coverImage: string | null;
+  bannerImage: string | null;
+  format: string | null;
   status: string | null;
-  episodes: number;
-  episodes_aired: number;
-  aired_on: string | null;
-  released_on: string | null;
+  episodes: number | null;
+  /** Raw AniList averageScore, integer 0–100. Convert at render time. */
+  averageScore: number | null;
+  genres: string[];
+  seasonYear: number | null;
 }
 
-export interface AnimeGenre {
-  id: number;
-  name: string;
-  russian: string;
-  kind: string;
+export interface AnimeRelation {
+  relationType: string;
+  anime: AnimeListItem;
 }
 
-export interface AnimeStudio {
-  id: number;
-  name: string;
-  filtered_name: string;
-  real: boolean;
-  image: string | null;
+export interface AnimeRecommendation {
+  rating: number;
+  anime: AnimeListItem;
 }
 
-/** Full anime object returned by GET /api/animes/:id */
+/** Full Media payload for the detail page. */
 export interface AnimeDetail extends AnimeListItem {
-  rating: string | null;
-  english: (string | null)[];
-  japanese: (string | null)[];
-  synonyms: string[];
-  license_name_ru: string | null;
-  duration: number;
   description: string | null;
-  description_html: string | null;
-  description_source: string | null;
-  franchise: string | null;
-  favoured: boolean;
-  anons: boolean;
-  ongoing: boolean;
-  thread_id: number | null;
-  topic_id: number | null;
-  myanimelist_id: number | null;
-  updated_at: string;
-  next_episode_at: string | null;
-  genres: AnimeGenre[];
-  studios: AnimeStudio[];
-  screenshots: { original: string; preview: string }[];
-  videos: {
-    id: number;
-    url: string;
-    image_url: string;
-    player_url: string;
-    name: string | null;
-    kind: string;
-    hosting: string;
-  }[];
+  duration: number | null;
+  source: string | null;
+  season: string | null;
+  studios: string[];
+  startDate: FuzzyDate | null;
+  endDate: FuzzyDate | null;
+  trailer: AnimeTrailer | null;
+  relations: AnimeRelation[];
+  recommendations: AnimeRecommendation[];
 }
 
-export interface AnimeRelated {
-  relation: string;
-  relation_russian: string;
-  anime: AnimeListItem | null;
-  manga: unknown | null;
-}
-
-export interface Genre {
-  id: number;
-  name: string;
-  russian: string;
-  kind: "anime" | "manga" | string;
-}
-
-export type AnimeOrder =
-  | "id"
-  | "id_desc"
-  | "ranked"
-  | "kind"
-  | "popularity"
-  | "name"
-  | "aired_on"
-  | "episodes"
-  | "status"
-  | "random"
-  | "created_at"
-  | "created_at_desc"
-  | "updated_at"
-  | "updated_at_desc";
+export type AnimeSort =
+  | "POPULARITY_DESC"
+  | "SCORE_DESC"
+  | "TRENDING_DESC"
+  | "TITLE_ROMAJI"
+  | "START_DATE_DESC"
+  | "EPISODES_DESC";
 
 export interface FetchAnimeParams {
   page?: number;
+  /** Maps to AniList Page.perPage (max 50). */
   limit?: number;
-  order?: AnimeOrder;
   search?: string;
+  /** AniList genre name, e.g. "Action". */
   genre?: string;
-  kind?: string;
-  status?: string;
-  score?: number;
-  /** Comma-separated anime ids to exclude (Shikimori `exclude_ids`). */
-  exclude_ids?: string;
+  sort?: AnimeSort;
+  /** Media ids to skip when building fallbacks (client-side filter). */
+  excludeIds?: number[];
+}
+
+export interface PageInfo {
+  total: number;
+  currentPage: number;
+  lastPage: number;
+  hasNextPage: boolean;
+}
+
+export interface AnimePageResult {
+  pageInfo: PageInfo;
+  media: AnimeListItem[];
 }

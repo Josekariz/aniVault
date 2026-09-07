@@ -6,7 +6,7 @@ export default function NotFound() {
       <p className="text-sm uppercase tracking-[0.2em] text-white/40">404</p>
       <h2 className="text-2xl font-bold text-white">Anime not found</h2>
       <p className="max-w-md text-white/60">
-        That title doesn&apos;t exist or couldn&apos;t be fetched from Shikimori.
+        That title doesn&apos;t exist or couldn&apos;t be fetched from AniList.
       </p>
       <Link
         href="/"

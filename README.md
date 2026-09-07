@@ -1,80 +1,67 @@
-# AnimeVault Web App with Next.js 14
+# Anime Vault
 
-![image](https://github.com/Josekariz/aniVault/assets/108508143/b84d53a9-b578-42ba-8801-f3b47ff95c61)
+Next.js 14 App Router catalog for browsing, searching, and recommending anime.
 
+## Stack
 
-## Overview
-AnimeVault is a feature-rich web application designed to provide an immersive experience for anime enthusiasts. Leveraging the latest advancements in Next.js 14, this project showcases the implementation of:
-
-Server Actions: Efficiently handle server-side logic and data fetching.
-Infinite Scrolling: Seamlessly load more content as users scroll, enhancing the user experience.
-Framer Motion Animations: Add smooth and interactive animations to create a dynamic and engaging interface.
-This project is perfect for developers looking to deepen their understanding of Next.js 14 and its powerful features. Follow along with the tutorial to build your own AnimeVault Web App from scratch, and explore the possibilities of modern web development.
+- Next.js 14 (App Router) + TypeScript + Tailwind CSS + Framer Motion
+- **AniList GraphQL** for catalog data (`POST https://graphql.anilist.co`) — no API key for reads
+- **Gemini** (optional, server-only) for opt-in AI recommendations on the detail page
 
 ## Prerequisites
 
-Before you begin, make sure you have the following installed:
+- Node.js 18+ (20 recommended)
+- npm
 
-- Node.js
-- npm or yarn
+## Setup
 
-## Getting Started
-
-1. Clone this repository:
+1. Clone the repo and install dependencies:
 
    ```bash
-   git clone https://github.com/your-username/animevault-web-app.git
+   npm install
    ```
 
-2. Navigate to the project directory:
+2. Copy the env example and add a Gemini key only if you want AI recommendations:
 
    ```bash
-   cd animevault-web-app
+   cp .env.local.example .env.local
    ```
 
-3. Install dependencies:
+   | Variable | Required? | Notes |
+   |---|---|---|
+   | `GEMINI_API_KEY` | Only for Ask Gemini | Server-side only — never `NEXT_PUBLIC_`. Create at https://aistudio.google.com/apikey |
+   | `GEMINI_MODEL` | Optional | Overrides the default model fallbacks |
+
+   Browse, search, genre filters, detail pages, and free catalog recommendations work **without** any env vars (AniList reads are unauthenticated).
+
+3. Start the dev server:
 
    ```bash
-   npm install # or yarn install
+   npm run dev
    ```
 
-4. Run the development server:
+   Open [http://localhost:3000](http://localhost:3000).
 
-   ```bash
-   npm run dev # or yarn dev
-   ```
+## Features
 
-   This will start the development server, and you can access the app at [http://localhost:3000](http://localhost:3000).
+- Server-fetched anime grid with infinite scroll (`Page` + `pageInfo.hasNextPage`)
+- Debounced nav search against AniList (quota-aware typeahead)
+- Hardcoded genre filter chips (AniList genre enum — no genres endpoint)
+- Detail page: synopsis, meta, trailer embed, relations, AniList recommendations
+- Opt-in Gemini chat with seeded AniList fallbacks when AI is unavailable
 
-## Features Covered
+## AniList rate limits
 
-### 1. Server Actions in Next.js 14
+The client assumes the **current degraded budget of 30 requests/minute** (docs: https://docs.anilist.co/guide/rate-limiting). It reads `X-RateLimit-*` headers and backs off near the limit / on 429. Re-check the docs if you change fetch frequency.
 
-Learn how to implement server actions in Next.js 14 for efficient data fetching and server-side rendering.
+## Project layout
 
-### 2. Infinite Scrolling
-
-Explore the implementation of infinite scrolling to provide a seamless user experience while navigating through the AnimeVault.
-
-### 3. Framer Motion Animations
-
-Discover how to integrate Framer Motion for smooth and engaging animations within your Next.js 14 app.
-
-## Project Structure
-
-The project is organized as follows:
-
-- **`pages`**: Contains the main application pages.
-- **`components`**: Reusable React components used throughout the app.
-- **`styles`**: CSS stylesheets for styling components.
-
-Feel free to explore and modify the code to suit your needs.
-
-## Feedback and Contributions
-
-If you have any feedback or would like to contribute to the project, feel free to open an issue or submit a pull request. Your input is highly appreciated!
+- `app/` — routes, server actions, recommend API route
+- `components/` — UI (grid, nav, detail, recommend chat)
+- `lib/anilist/` — GraphQL client, queries, mappers
+- `lib/gemini.ts` — server-only Gemini helper
+- `types/` — shared TypeScript shapes
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+MIT — see `LICENSE` if present.

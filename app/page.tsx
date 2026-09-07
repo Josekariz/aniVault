@@ -2,8 +2,9 @@ import AnimeGrid from "@/components/AnimeGrid";
 import GenreFilter from "@/components/GenreFilter";
 import Hero from "@/components/Hero";
 import LoadMore from "@/components/LoadMore";
-import { fetchAnimeList, fetchGenres } from "@/app/actions/anime";
-import type { AnimeListItem, Genre } from "@/types/anime";
+import { fetchAnimePage } from "@/app/actions/anime";
+import { ANIME_GENRES, isValidGenre } from "@/lib/anilist/genres";
+import type { AnimeListItem } from "@/types/anime";
 
 interface HomeProps {
   searchParams: {
@@ -14,46 +15,39 @@ interface HomeProps {
 
 export default async function Home({ searchParams }: HomeProps) {
   const search = searchParams.search?.trim() || undefined;
-  const genre =
-    searchParams.genre && /^\d+$/.test(searchParams.genre)
-      ? searchParams.genre
-      : undefined;
+  const genre = isValidGenre(searchParams.genre)
+    ? searchParams.genre
+    : undefined;
 
   const filters = {
     search,
     genre,
-    order: "popularity" as const,
+    sort: "POPULARITY_DESC" as const,
   };
 
   let data: AnimeListItem[] = [];
-  let genres: Genre[] = [];
+  let hasNextPage = false;
   let loadError: string | null = null;
 
   try {
-    const [animeResult, genreResult] = await Promise.all([
-      fetchAnimeList({ page: 1, limit: 8, ...filters }),
-      fetchGenres().catch(() => [] as Genre[]),
-    ]);
-    data = animeResult;
-    genres = genreResult;
+    const page = await fetchAnimePage({ page: 1, limit: 8, ...filters });
+    data = page.media;
+    hasNextPage = page.pageInfo.hasNextPage;
   } catch {
-    loadError = "We couldn't load anime right now. Please try again shortly.";
+    loadError =
+      "We couldn't load anime from AniList right now. Please try again shortly.";
   }
-
-  const activeGenreName = genre
-    ? genres.find((g) => String(g.id) === genre)?.name
-    : undefined;
 
   const heading = search
     ? `Results for “${search}”`
-    : activeGenreName
-      ? activeGenreName
+    : genre
+      ? genre
       : "Explore Anime";
 
   const subtitle = search
-    ? "Server-side matches from Shikimori — not a filter of already-loaded cards."
-    : activeGenreName
-      ? `Browsing the ${activeGenreName} catalog.`
+    ? "Live AniList search — not a filter of already-loaded cards."
+    : genre
+      ? `Browsing ${genre} titles sorted by popularity.`
       : "Browse popular titles and open any card for details, related shows, and recommendations.";
 
   return (
@@ -71,7 +65,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <p className="max-w-xl text-base text-ink-muted">{subtitle}</p>
         </div>
 
-        {genres.length > 0 ? <GenreFilter genres={genres} /> : null}
+        <GenreFilter genres={ANIME_GENRES} />
 
         {loadError ? (
           <div
@@ -90,7 +84,11 @@ export default async function Home({ searchParams }: HomeProps) {
                   : "No anime found."
               }
             />
-            <LoadMore initialPage={2} filters={filters} />
+            <LoadMore
+              initialPage={2}
+              initialHasMore={hasNextPage}
+              filters={filters}
+            />
           </>
         )}
       </main>

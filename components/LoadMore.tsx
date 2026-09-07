@@ -3,40 +3,42 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
-import { fetchAnimeList } from "@/app/actions/anime";
+import { fetchAnimePage } from "@/app/actions/anime";
 import AnimeCard from "./AnimeCard";
 import { Spinner } from "./AnimeSkeleton";
 import type { AnimeListItem, FetchAnimeParams } from "@/types/anime";
 
 interface LoadMoreProps {
   initialPage?: number;
+  /** From the SSR first page — avoid a wasted page-2 request when false. */
+  initialHasMore?: boolean;
   filters?: Omit<FetchAnimeParams, "page" | "limit">;
   limit?: number;
 }
 
 function LoadMore({
   initialPage = 2,
+  initialHasMore = true,
   filters = {},
   limit = 8,
 }: LoadMoreProps) {
   const { ref, inView } = useInView({ rootMargin: "200px" });
   const [items, setItems] = useState<AnimeListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
   const pageRef = useRef(initialPage);
   const loadingRef = useRef(false);
   const filtersKey = JSON.stringify(filters);
 
-  // Reset when filters change (search/genre in later chunks).
   useEffect(() => {
     pageRef.current = initialPage;
     setItems([]);
     setError(null);
-    setHasMore(true);
+    setHasMore(initialHasMore);
     setIsLoading(false);
     loadingRef.current = false;
-  }, [filtersKey, initialPage]);
+  }, [filtersKey, initialPage, initialHasMore]);
 
   const loadNext = useCallback(async () => {
     if (loadingRef.current || !hasMore) return;
@@ -46,17 +48,23 @@ function LoadMore({
     const page = pageRef.current;
 
     try {
-      const next = await fetchAnimeList({ ...filters, page, limit });
+      const result = await fetchAnimePage({ ...filters, page, limit });
+      const next = result.media;
+
       if (next.length === 0) {
         setHasMore(false);
       } else {
-        setItems((prev) => [...prev, ...next]);
+        setItems((prev) => {
+          const seen = new Set(prev.map((item) => item.id));
+          const unique = next.filter((item) => !seen.has(item.id));
+          return unique.length ? [...prev, ...unique] : prev;
+        });
         pageRef.current = page + 1;
-        if (next.length < limit) setHasMore(false);
+        setHasMore(Boolean(result.pageInfo.hasNextPage));
       }
       setError(null);
     } catch {
-      setError("Couldn't load more anime. Try again.");
+      setError("Couldn't load more from AniList. Try again in a moment.");
     } finally {
       loadingRef.current = false;
       setIsLoading(false);
@@ -69,12 +77,16 @@ function LoadMore({
     }
   }, [inView, hasMore, loadNext, items.length, error]);
 
+  if (!initialHasMore && items.length === 0 && !error) {
+    return null;
+  }
+
   return (
     <>
       {items.length > 0 ? (
         <section className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {items.map((anime, index) => (
-            <AnimeCard key={`${anime.id}-${index}`} anime={anime} index={index} />
+            <AnimeCard key={anime.id} anime={anime} index={index} />
           ))}
         </section>
       ) : null}
@@ -85,7 +97,10 @@ function LoadMore({
             <p className="text-sm text-ink-muted">{error}</p>
             <button
               type="button"
-              onClick={() => void loadNext()}
+              onClick={() => {
+                setError(null);
+                void loadNext();
+              }}
               className="rounded-full bg-surface px-4 py-2 text-sm font-medium text-ink shadow-sm ring-1 ring-white/10 transition hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Retry
@@ -99,7 +114,7 @@ function LoadMore({
           </div>
         ) : null}
 
-        {!hasMore && !error ? (
+        {!hasMore && !error && items.length > 0 ? (
           <p className="text-sm text-ink-subtle">You&apos;ve reached the end.</p>
         ) : null}
       </section>

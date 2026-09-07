@@ -1,3 +1,4 @@
+import { formatFuzzyDate, formatScoreOutOfTen } from "@/lib/anilist/format";
 import type { AnimeDetail } from "@/types/anime";
 
 interface AnimeMetaProps {
@@ -36,20 +37,18 @@ function formatDuration(minutes: number | null | undefined) {
 }
 
 export default function AnimeMeta({ anime }: AnimeMetaProps) {
-  const score =
-    anime.score && anime.score !== "0.0" ? anime.score : "N/A";
-  const episodes = anime.episodes || anime.episodes_aired || "—";
-  const aired = [anime.aired_on, anime.released_on]
+  const score = formatScoreOutOfTen(anime.averageScore) ?? "N/A";
+  const aired = [formatFuzzyDate(anime.startDate), formatFuzzyDate(anime.endDate)]
     .filter(Boolean)
     .join(" → ");
 
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <MetaCard label="Score" value={score} accent />
-      <MetaCard label="Episodes" value={episodes} />
+      <MetaCard label="Episodes" value={anime.episodes ?? "—"} />
       <MetaCard
-        label="Rating"
-        value={anime.rating ? anime.rating.replace(/_/g, " ") : "—"}
+        label="Format"
+        value={anime.format ? anime.format.replace(/_/g, " ") : "—"}
       />
       <MetaCard label="Duration" value={formatDuration(anime.duration)} />
       <MetaCard

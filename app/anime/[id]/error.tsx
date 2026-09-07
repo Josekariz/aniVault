@@ -12,7 +12,8 @@ export default function AnimeError({
     <main className="flex flex-col items-center justify-center gap-6 px-8 py-24 text-center">
       <h2 className="text-2xl font-bold text-white">Couldn&apos;t load this anime</h2>
       <p className="max-w-md text-white/60">
-        The detail page failed to load. You can retry or return to the catalog.
+        The detail page failed to load from AniList. You can retry or return to
+        explore.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <button

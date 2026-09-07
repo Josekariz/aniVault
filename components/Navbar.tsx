@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   FormEvent,
+  KeyboardEvent,
   Suspense,
   useCallback,
   useEffect,
@@ -14,11 +15,13 @@ import {
   useTransition,
 } from "react";
 
-import { fetchAnimeList } from "@/app/actions/anime";
-import { shikimoriImageUrl } from "@/lib/shikimori";
+import { fetchSearchSuggestions } from "@/app/actions/anime";
+import { formatScoreOutOfTen } from "@/lib/anilist/format";
 import type { AnimeListItem } from "@/types/anime";
 
-const DEBOUNCE_MS = 300;
+/** Slightly longer than before — AniList is at 30 req/min degraded. */
+const DEBOUNCE_MS = 450;
+const MIN_QUERY_LENGTH = 2;
 
 function SearchField() {
   const router = useRouter();
@@ -30,6 +33,7 @@ function SearchField() {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [suggestError, setSuggestError] = useState(false);
+  const [quotaSoftSkip, setQuotaSoftSkip] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blurRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
@@ -60,9 +64,10 @@ function SearchField() {
 
   const loadSuggestions = useCallback((value: string) => {
     const trimmed = value.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < MIN_QUERY_LENGTH) {
       setSuggestions([]);
       setSuggestError(false);
+      setQuotaSoftSkip(false);
       setOpen(false);
       return;
     }
@@ -70,20 +75,34 @@ function SearchField() {
     const requestId = ++requestIdRef.current;
     startTransition(async () => {
       try {
-        const results = await fetchAnimeList({
-          search: trimmed,
-          limit: 6,
-          order: "popularity",
-        });
+        const result = await fetchSearchSuggestions(trimmed);
         if (requestId !== requestIdRef.current) return;
-        const list = Array.isArray(results) ? results : [];
-        setSuggestions(list);
+
+        if (result.status === "skipped") {
+          setSuggestions([]);
+          setSuggestError(false);
+          setQuotaSoftSkip(true);
+          setOpen(true);
+          return;
+        }
+
+        if (result.status === "error") {
+          setSuggestions([]);
+          setSuggestError(true);
+          setQuotaSoftSkip(false);
+          setOpen(true);
+          return;
+        }
+
+        setSuggestions(result.media);
         setSuggestError(false);
+        setQuotaSoftSkip(false);
         setOpen(true);
       } catch {
         if (requestId !== requestIdRef.current) return;
         setSuggestions([]);
         setSuggestError(true);
+        setQuotaSoftSkip(false);
         setOpen(true);
       }
     });
@@ -93,8 +112,6 @@ function SearchField() {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    // Suggestions only while typing — never navigate on every keystroke.
-    // Full-page RSC navigations were causing 504s on Vercel.
     debounceRef.current = setTimeout(() => {
       loadSuggestions(value);
     }, DEBOUNCE_MS);
@@ -103,9 +120,19 @@ function SearchField() {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    commitSearch(query);
-    loadSuggestions(query);
+    // Invalidate in-flight typeahead — Enter navigates; don't spend another request.
+    requestIdRef.current += 1;
     setOpen(false);
+    setSuggestions([]);
+    setQuotaSoftSkip(false);
+    setSuggestError(false);
+    commitSearch(query);
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape") {
+      setOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -116,6 +143,11 @@ function SearchField() {
   }, []);
 
   const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
+  const showEmpty =
+    !suggestError &&
+    !quotaSoftSkip &&
+    safeSuggestions.length === 0 &&
+    query.trim().length >= MIN_QUERY_LENGTH;
 
   return (
     <div className="relative w-full max-w-md">
@@ -130,8 +162,15 @@ function SearchField() {
           placeholder="Search anime…"
           autoComplete="off"
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
           onFocus={() => {
-            if (safeSuggestions.length > 0 || suggestError) setOpen(true);
+            if (
+              safeSuggestions.length > 0 ||
+              suggestError ||
+              quotaSoftSkip
+            ) {
+              setOpen(true);
+            }
           }}
           onBlur={() => {
             blurRef.current = setTimeout(() => setOpen(false), 150);
@@ -154,47 +193,52 @@ function SearchField() {
         <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-white/10 bg-surface-2 shadow-xl shadow-black/40">
           {suggestError ? (
             <p className="px-4 py-3 text-sm text-ink-muted">
-              Search failed. Press Enter to search the catalog.
+              AniList search failed. Press Enter to search the catalog.
             </p>
           ) : null}
 
-          {!suggestError &&
-          safeSuggestions.length === 0 &&
-          query.trim().length >= 2 ? (
+          {quotaSoftSkip ? (
+            <p className="px-4 py-3 text-sm text-ink-muted">
+              Suggestions paused to save AniList quota. Press Enter to search.
+            </p>
+          ) : null}
+
+          {showEmpty ? (
             <p className="px-4 py-3 text-sm text-ink-muted">No matches found.</p>
           ) : null}
 
           <ul className="max-h-80 overflow-y-auto py-1">
-            {safeSuggestions.map((anime) => (
-              <li key={anime.id}>
-                <Link
-                  href={`/anime/${anime.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  <span className="relative h-12 w-9 shrink-0 overflow-hidden rounded-md bg-surface-2">
-                    <Image
-                      src={shikimoriImageUrl(anime.image?.original)}
-                      alt=""
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                    />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-ink">
-                      {anime.name}
+            {safeSuggestions.map((anime) => {
+              const score = formatScoreOutOfTen(anime.averageScore);
+              return (
+                <li key={anime.id}>
+                  <Link
+                    href={`/anime/${anime.id}`}
+                    className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <span className="relative h-12 w-9 shrink-0 overflow-hidden rounded-md bg-surface-2">
+                      <Image
+                        src={anime.coverImage || "/logo.svg"}
+                        alt=""
+                        fill
+                        sizes="36px"
+                        className="object-cover"
+                      />
                     </span>
-                    <span className="block text-xs capitalize text-ink-subtle">
-                      {anime.kind ?? "anime"}
-                      {anime.score && anime.score !== "0.0"
-                        ? ` · ${anime.score}`
-                        : ""}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-ink">
+                        {anime.displayTitle}
+                      </span>
+                      <span className="block text-xs capitalize text-ink-subtle">
+                        {anime.format?.replace(/_/g, " ") ?? "anime"}
+                        {score ? ` · ${score}` : ""}
+                      </span>
                     </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}
