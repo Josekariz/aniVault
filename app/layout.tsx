@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${body.variable} ${display.variable} font-sans antialiased`}>
+      <body className={`${body.variable} ${display.variable} bg-black font-sans antialiased`}>
         <div className="mx-auto min-h-screen max-w-7xl bg-canvas text-ink">
           <Navbar />
           {children}

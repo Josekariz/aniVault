@@ -9,24 +9,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#f3f5f8",
-        surface: "#ffffff",
-        "surface-2": "#e8ecf2",
+        canvas: "#0F1117",
+        surface: "#161921",
+        "surface-2": "#1c2130",
         ink: {
-          DEFAULT: "#141820",
-          muted: "#4b5568",
-          subtle: "#7b8494",
+          DEFAULT: "#f3f5f9",
+          muted: "#b4bbc8",
+          subtle: "#7f8796",
         },
         accent: {
-          DEFAULT: "#e11d38",
-          soft: "#ffe4e8",
+          DEFAULT: "#ff5956",
+          soft: "#3a1a1d",
         },
-        score: "#c27803",
+        score: "#FFAD49",
         app: {
-          DEFAULT: "#f3f5f8",
-          elevated: "#ffffff",
-          soft: "#ffffff",
-          hover: "#e8ecf2",
+          DEFAULT: "#0F1117",
+          elevated: "#161921",
+          soft: "#161921",
+          hover: "#1c2130",
         },
       },
       fontFamily: {
@@ -40,7 +40,7 @@ const config: Config = {
         hero: 'url("/hero.png")',
       },
       boxShadow: {
-        soft: "0 10px 40px -18px rgba(20, 24, 32, 0.28)",
+        soft: "0 18px 50px -24px rgba(0, 0, 0, 0.65)",
       },
     },
   },
