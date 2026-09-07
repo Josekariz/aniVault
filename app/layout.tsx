@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, Outfit } from "next/font/google";
 
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 
 import "./globals.css";
 
-const dmSans = DM_Sans({ subsets: ["latin"] });
+const body = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+});
+
+const display = Outfit({
+  subsets: ["latin"],
+  variable: "--font-display",
+});
 
 export const metadata: Metadata = {
   title: "Anime Vault",
@@ -20,8 +28,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.className} bg-[#10131a]`}>
-        <div className="mx-auto min-h-screen max-w-7xl bg-app text-[#f3f4f8]">
+      <body className={`${body.variable} ${display.variable} font-sans antialiased`}>
+        <div className="mx-auto min-h-screen max-w-7xl bg-canvas text-ink">
           <Navbar />
           {children}
           <Footer />

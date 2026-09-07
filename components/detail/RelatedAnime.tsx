@@ -23,11 +23,11 @@ export default function RelatedAnime({ related, similar }: RelatedAnimeProps) {
           <div className="space-y-1">
             <h2
               id="related-heading"
-              className="text-2xl font-bold tracking-tight text-white"
+              className="font-display text-2xl font-semibold tracking-tight text-ink"
             >
               Related
             </h2>
-            <p className="text-sm text-white/45">
+            <p className="text-sm text-ink-muted">
               Adaptations, sequels, and other titles in this series.
             </p>
           </div>
@@ -37,9 +37,9 @@ export default function RelatedAnime({ related, similar }: RelatedAnimeProps) {
               <li key={`${entry.relation}-${entry.anime.id}`}>
                 <Link
                   href={`/anime/${entry.anime.id}`}
-                  className="group flex gap-4 rounded-xl border border-white/10 bg-app-soft p-3 transition hover:border-[#ff5956]/40 hover:bg-app-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+                  className="group flex gap-4 rounded-2xl border border-ink/8 bg-white p-3 shadow-sm transition hover:border-accent/35 hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <span className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-app">
+                  <span className="relative h-24 w-16 shrink-0 overflow-hidden rounded-xl bg-surface-2">
                     <Image
                       src={shikimoriImageUrl(entry.anime.image?.original)}
                       alt=""
@@ -48,14 +48,14 @@ export default function RelatedAnime({ related, similar }: RelatedAnimeProps) {
                       className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   </span>
-                  <span className="min-w-0 flex flex-col justify-center gap-1">
-                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#ff8a87]">
+                  <span className="flex min-w-0 flex-col justify-center gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
                       {entry.relation}
                     </span>
-                    <span className="line-clamp-2 text-base font-semibold text-white group-hover:text-[#ff8a87]">
+                    <span className="line-clamp-2 text-base font-semibold text-ink group-hover:text-accent">
                       {entry.anime.name}
                     </span>
-                    <span className="text-xs capitalize text-white/40">
+                    <span className="text-xs capitalize text-ink-subtle">
                       {entry.anime.kind ?? "anime"}
                       {entry.anime.score && entry.anime.score !== "0.0"
                         ? ` · ${entry.anime.score}`
@@ -74,11 +74,11 @@ export default function RelatedAnime({ related, similar }: RelatedAnimeProps) {
           <div className="space-y-1">
             <h2
               id="similar-heading"
-              className="text-2xl font-bold tracking-tight text-white"
+              className="font-display text-2xl font-semibold tracking-tight text-ink"
             >
               Similar anime
             </h2>
-            <p className="text-sm text-white/45">
+            <p className="text-sm text-ink-muted">
               Titles Shikimori associates with this one.
             </p>
           </div>

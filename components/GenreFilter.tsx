@@ -30,22 +30,22 @@ function GenreFilterInner({ genres }: GenreFilterProps) {
   const chipClass = (isActive: boolean) =>
     [
       "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
       isActive
-        ? "border-transparent bg-gradient-to-r from-[#ff5956] to-[#ee1e38] text-white"
-        : "border-white/12 bg-app-soft text-white/75 hover:border-white/25 hover:text-white",
+        ? "border-transparent bg-accent text-white"
+        : "border-ink/10 bg-white text-ink-muted hover:border-ink/20 hover:text-ink",
     ].join(" ");
 
   return (
     <div className="space-y-3">
       <div className="flex items-end justify-between gap-4">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/45">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-ink-subtle">
           Genres
         </h3>
         {active ? (
           <Link
             href={buildHref(searchParams)}
-            className="text-sm text-white/50 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+            className="text-sm text-ink-subtle transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Clear
           </Link>
@@ -89,7 +89,7 @@ export default function GenreFilter({ genres }: GenreFilterProps) {
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-9 w-20 shrink-0 animate-pulse rounded-full bg-[#161921]"
+              className="h-9 w-20 shrink-0 animate-pulse rounded-full bg-surface-2"
             />
           ))}
         </div>

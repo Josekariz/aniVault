@@ -3,13 +3,13 @@ import Link from "next/link";
 
 function Footer() {
   return (
-    <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-white/8 bg-app-elevated px-8 py-6 sm:px-16">
-      <p className="text-sm font-medium text-white/75">
+    <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-ink/8 bg-white px-8 py-6 sm:px-16">
+      <p className="text-sm font-medium text-ink-muted">
         © {new Date().getFullYear()} Anime Vault
       </p>
       <Link
         href="/"
-        className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+        className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <Image
           src="/logo.svg"
@@ -25,7 +25,7 @@ function Footer() {
           target="_blank"
           rel="noreferrer"
           aria-label="TikTok"
-          className="opacity-70 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+          className="opacity-60 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Image src="/tiktok.svg" alt="" width={19} height={19} />
         </a>
@@ -34,7 +34,7 @@ function Footer() {
           target="_blank"
           rel="noreferrer"
           aria-label="Instagram"
-          className="opacity-70 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+          className="opacity-60 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Image src="/instagram.svg" alt="" width={19} height={19} />
         </a>
@@ -43,7 +43,7 @@ function Footer() {
           target="_blank"
           rel="noreferrer"
           aria-label="Twitter"
-          className="opacity-70 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+          className="opacity-60 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Image src="/twitter.svg" alt="" width={19} height={19} />
         </a>

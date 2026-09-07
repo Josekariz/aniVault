@@ -20,18 +20,18 @@ export default function AnimeScreenshots({
       <div className="space-y-1">
         <h2
           id="screenshots-heading"
-          className="text-2xl font-bold tracking-tight text-white"
+          className="font-display text-2xl font-semibold tracking-tight text-ink"
         >
           Screenshots
         </h2>
-        <p className="text-sm text-white/45">A look inside {title}.</p>
+        <p className="text-sm text-ink-muted">A look inside {title}.</p>
       </div>
 
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {items.map((shot) => (
           <li
             key={shot.original}
-            className="relative aspect-video overflow-hidden rounded-xl bg-[#161921] ring-1 ring-white/5"
+            className="relative aspect-video overflow-hidden rounded-2xl bg-surface-2 ring-1 ring-ink/8"
           >
             <Image
               src={shikimoriImageUrl(shot.preview || shot.original)}

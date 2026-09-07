@@ -18,7 +18,7 @@ import { fetchAnimeList } from "@/app/actions/anime";
 import { shikimoriImageUrl } from "@/lib/shikimori";
 import type { AnimeListItem } from "@/types/anime";
 
-const DEBOUNCE_MS = 350;
+const DEBOUNCE_MS = 300;
 
 function SearchField() {
   const router = useRouter();
@@ -34,12 +34,11 @@ function SearchField() {
   const blurRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
 
-  // Keep input in sync when URL changes (genre chips / back button).
   useEffect(() => {
     setQuery(searchParams.get("search") ?? "");
   }, [searchParams]);
 
-  const pushSearch = useCallback(
+  const commitSearch = useCallback(
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       const trimmed = value.trim();
@@ -47,7 +46,6 @@ function SearchField() {
       if (trimmed) params.set("search", trimmed);
       else params.delete("search");
 
-      // Search always lands on the catalog.
       const qs = params.toString();
       const href = qs ? `/?${qs}` : "/";
 
@@ -65,6 +63,7 @@ function SearchField() {
     if (trimmed.length < 2) {
       setSuggestions([]);
       setSuggestError(false);
+      setOpen(false);
       return;
     }
 
@@ -77,7 +76,8 @@ function SearchField() {
           order: "popularity",
         });
         if (requestId !== requestIdRef.current) return;
-        setSuggestions(results);
+        const list = Array.isArray(results) ? results : [];
+        setSuggestions(list);
         setSuggestError(false);
         setOpen(true);
       } catch {
@@ -93,8 +93,9 @@ function SearchField() {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
+    // Suggestions only while typing — never navigate on every keystroke.
+    // Full-page RSC navigations were causing 504s on Vercel.
     debounceRef.current = setTimeout(() => {
-      pushSearch(value);
       loadSuggestions(value);
     }, DEBOUNCE_MS);
   };
@@ -102,7 +103,7 @@ function SearchField() {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    pushSearch(query);
+    commitSearch(query);
     loadSuggestions(query);
     setOpen(false);
   };
@@ -113,6 +114,8 @@ function SearchField() {
       if (blurRef.current) clearTimeout(blurRef.current);
     };
   }, []);
+
+  const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
 
   return (
     <div className="relative w-full max-w-md">
@@ -128,46 +131,48 @@ function SearchField() {
           autoComplete="off"
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => {
-            if (suggestions.length > 0 || suggestError) setOpen(true);
+            if (safeSuggestions.length > 0 || suggestError) setOpen(true);
           }}
           onBlur={() => {
             blurRef.current = setTimeout(() => setOpen(false), 150);
           }}
-          className="w-full rounded-xl border border-white/12 bg-app-soft py-2.5 pl-4 pr-10 text-sm text-white placeholder:text-white/40 transition hover:border-white/20 focus:border-[#ff5956]/60 focus:outline-none focus:ring-2 focus:ring-[#ff5956]/40"
+          className="w-full rounded-full border border-ink/10 bg-white py-2.5 pl-4 pr-10 text-sm text-ink shadow-sm placeholder:text-ink-subtle transition hover:border-ink/20 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
         {isPending ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-white/20 border-t-[#ff5956]"
+            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-ink/15 border-t-accent"
           />
         ) : (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/30">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-subtle">
             ⌕
           </span>
         )}
       </form>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-xl border border-white/12 bg-app-elevated shadow-2xl shadow-black/40">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-xl shadow-ink/10">
           {suggestError ? (
-            <p className="px-4 py-3 text-sm text-white/55">
-              Search failed. Showing catalog results from the URL instead.
+            <p className="px-4 py-3 text-sm text-ink-muted">
+              Search failed. Press Enter to search the catalog.
             </p>
           ) : null}
 
-          {!suggestError && suggestions.length === 0 && query.trim().length >= 2 ? (
-            <p className="px-4 py-3 text-sm text-white/55">No matches found.</p>
+          {!suggestError &&
+          safeSuggestions.length === 0 &&
+          query.trim().length >= 2 ? (
+            <p className="px-4 py-3 text-sm text-ink-muted">No matches found.</p>
           ) : null}
 
           <ul className="max-h-80 overflow-y-auto py-1">
-            {suggestions.map((anime) => (
+            {safeSuggestions.map((anime) => (
               <li key={anime.id}>
                 <Link
                   href={`/anime/${anime.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none"
+                  className="flex items-center gap-3 px-3 py-2.5 transition hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
                   onMouseDown={(e) => e.preventDefault()}
                 >
-                  <span className="relative h-12 w-9 shrink-0 overflow-hidden rounded-md bg-[#1a1d27]">
+                  <span className="relative h-12 w-9 shrink-0 overflow-hidden rounded-md bg-surface-2">
                     <Image
                       src={shikimoriImageUrl(anime.image?.original)}
                       alt=""
@@ -177,10 +182,10 @@ function SearchField() {
                     />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-white">
+                    <span className="block truncate text-sm font-medium text-ink">
                       {anime.name}
                     </span>
-                    <span className="block text-xs capitalize text-white/45">
+                    <span className="block text-xs capitalize text-ink-subtle">
                       {anime.kind ?? "anime"}
                       {anime.score && anime.score !== "0.0"
                         ? ` · ${anime.score}`
@@ -199,20 +204,20 @@ function SearchField() {
 
 function NavbarInner() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-app/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-ink/8 bg-canvas/85 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:gap-6 sm:px-8 lg:px-16">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+          className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Image
             src="/logo.svg"
             alt=""
-            width={36}
-            height={34}
+            width={34}
+            height={32}
             className="object-contain"
           />
-          <span className="hidden text-sm font-semibold tracking-wide text-white sm:inline">
+          <span className="font-display hidden text-sm font-semibold tracking-wide text-ink sm:inline">
             Anime Vault
           </span>
         </Link>
@@ -223,7 +228,7 @@ function NavbarInner() {
 
         <Link
           href="/#explore"
-          className="hidden shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956] md:inline-flex"
+          className="hidden shrink-0 rounded-full px-3 py-2 text-sm font-medium text-ink-muted transition hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:inline-flex"
         >
           Explore
         </Link>
@@ -236,9 +241,9 @@ export default function Navbar() {
   return (
     <Suspense
       fallback={
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-app/90 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-ink/8 bg-canvas/85 backdrop-blur-xl">
           <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:px-8 lg:px-16">
-            <div className="h-9 w-full max-w-md animate-pulse rounded-xl bg-app-soft" />
+            <div className="h-9 w-full max-w-md animate-pulse rounded-full bg-surface" />
           </div>
         </header>
       }
