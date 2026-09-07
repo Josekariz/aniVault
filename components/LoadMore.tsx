@@ -72,7 +72,7 @@ function LoadMore({
   return (
     <>
       {items.length > 0 ? (
-        <section className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <section className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {items.map((anime, index) => (
             <AnimeCard key={`${anime.id}-${index}`} anime={anime} index={index} />
           ))}
