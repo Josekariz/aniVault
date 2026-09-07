@@ -10,12 +10,20 @@ export interface RecommendRequestBody {
   name: string;
   genres: string[];
   synopsis?: string | null;
+  /** Free-form chat preference from the bubble. */
+  message?: string;
+  /**
+   * When false/omitted, skip Gemini and return Shikimori similar/trending only.
+   * Keep Gemini opt-in to conserve quota.
+   */
+  useGemini?: boolean;
 }
 
 export interface RecommendSuccessResponse {
   source: "gemini" | "fallback";
   recommendations: RecommendationItem[];
   message?: string;
+  reply?: string;
 }
 
 export interface RecommendErrorResponse {

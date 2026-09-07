@@ -20,8 +20,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.className} bg-black`}>
-        <div className="mx-auto min-h-screen max-w-7xl bg-[#0F1117]">
+      <body className={`${dmSans.className} bg-[#10131a]`}>
+        <div className="mx-auto min-h-screen max-w-7xl bg-app text-[#f3f4f8]">
           <Navbar />
           {children}
           <Footer />

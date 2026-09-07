@@ -21,46 +21,52 @@ function isValidBody(body: unknown): body is RecommendRequestBody {
     typeof record.name === "string" &&
     record.name.trim().length > 0 &&
     Array.isArray(record.genres) &&
-    record.genres.every((genre) => typeof genre === "string")
+    record.genres.every((genre) => typeof genre === "string") &&
+    (record.message === undefined || typeof record.message === "string") &&
+    (record.useGemini === undefined || typeof record.useGemini === "boolean")
   );
 }
 
 async function resolveShikimoriIds(
   recommendations: RecommendationItem[]
 ): Promise<RecommendationItem[]> {
-  return Promise.all(
-    recommendations.map(async (item) => {
-      try {
-        const matches = await getAnimes({
-          search: item.title,
-          limit: 1,
-          order: "popularity",
-        });
-        const match = matches[0];
-        if (!match) return item;
-        return {
-          ...item,
-          title: match.name,
-          shikimoriId: match.id,
-        };
-      } catch {
-        return item;
-      }
-    })
-  );
+  // Sequential + capped — avoid fan-out search traffic for every suggestion.
+  const resolved: RecommendationItem[] = [];
+  for (const item of recommendations.slice(0, 3)) {
+    try {
+      const matches = await getAnimes({
+        search: item.title,
+        limit: 1,
+        order: "popularity",
+      });
+      const match = matches[0];
+      resolved.push(
+        match
+          ? { ...item, title: match.name, shikimoriId: match.id }
+          : item
+      );
+    } catch {
+      resolved.push(item);
+    }
+  }
+  return resolved;
 }
 
 async function buildFallback(
-  animeId: number
+  animeId: number,
+  reply?: string
 ): Promise<RecommendSuccessResponse> {
   try {
     const similar = await getSimilarAnime(animeId);
     if (similar.length > 0) {
       return {
         source: "fallback",
+        reply:
+          reply ??
+          "Here are similar titles from Shikimori — no AI call used.",
         message:
-          "AI recommendations unavailable — showing Shikimori similar titles instead.",
-        recommendations: similar.slice(0, 4).map((anime) => ({
+          "Showing Shikimori similar titles (Gemini skipped or unavailable).",
+        recommendations: similar.slice(0, 3).map((anime) => ({
           title: anime.name,
           reason: "Listed as similar on Shikimori.",
           shikimoriId: anime.id,
@@ -68,19 +74,19 @@ async function buildFallback(
       };
     }
   } catch {
-    // fall through to trending
+    // fall through
   }
 
   const trending = await getAnimes({
     page: 1,
-    limit: 4,
+    limit: 3,
     order: "popularity",
   });
 
   return {
     source: "fallback",
-    message:
-      "AI recommendations unavailable — showing trending titles instead.",
+    reply: reply ?? "Here are trending titles from the catalog.",
+    message: "Showing trending titles (Gemini skipped or unavailable).",
     recommendations: trending.map((anime) => ({
       title: anime.name,
       reason: "Currently popular on Shikimori.",
@@ -110,22 +116,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(error, { status: 400 });
   }
 
+  // Default path: free catalog fallback — Gemini only when explicitly requested.
+  if (!body.useGemini) {
+    const fallback = await buildFallback(body.animeId);
+    return NextResponse.json(fallback);
+  }
+
   try {
-    const raw = await getGeminiRecommendations({
+    const result = await getGeminiRecommendations({
       name: body.name,
       genres: body.genres,
       synopsis: body.synopsis,
+      message: body.message,
     });
-    const recommendations = await resolveShikimoriIds(raw);
+    const recommendations = await resolveShikimoriIds(result.recommendations);
 
     const success: RecommendSuccessResponse = {
       source: "gemini",
+      reply: result.reply,
       recommendations,
     };
     return NextResponse.json(success);
   } catch (error) {
     try {
-      const fallback = await buildFallback(body.animeId);
+      const fallback = await buildFallback(
+        body.animeId,
+        "AI is unavailable right now, so I pulled catalog matches instead."
+      );
       if (error instanceof GeminiError) {
         fallback.message = `${fallback.message} (${error.code})`;
       }
@@ -133,8 +150,7 @@ export async function POST(request: NextRequest) {
     } catch {
       const response: RecommendErrorResponse = {
         error: "Recommendations are temporarily unavailable.",
-        code:
-          error instanceof GeminiError ? error.code : "upstream",
+        code: error instanceof GeminiError ? error.code : "upstream",
       };
       const status =
         error instanceof GeminiError && error.code === "rate_limit"

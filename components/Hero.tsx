@@ -15,7 +15,7 @@ function Hero({ featured }: HeroProps) {
   return (
     <header className="relative overflow-hidden px-8 py-16 sm:px-16 sm:py-20">
       <div className="pointer-events-none absolute inset-0 bg-hero bg-cover bg-center opacity-40" />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0F1117] via-[#0F1117]/92 to-[#0F1117]/55" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-app via-app/90 to-app/50" />
       <div className="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-[#ee1e38]/20 blur-3xl" />
 
       <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
@@ -41,16 +41,16 @@ function Hero({ featured }: HeroProps) {
               Explore The <span className="red-gradient">Diverse Realms</span> of
               Anime Magic
             </h1>
-            <p className="max-w-md text-base text-white/60 sm:text-lg">
+            <p className="max-w-md text-base text-white/70 sm:text-lg">
               Search the catalog, filter by genre, and open any title for details
-              plus AI-assisted recommendations.
+              plus on-demand AI recommendations.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <a
               href="#explore"
-              className="inline-flex items-center rounded-lg bg-gradient-to-r from-[#ff5956] to-[#ee1e38] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F1117]"
+              className="inline-flex items-center rounded-lg bg-gradient-to-r from-[#ff5956] to-[#ee1e38] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956] focus-visible:ring-offset-2 focus-visible:ring-offset-app"
             >
               Start exploring
             </a>
@@ -74,7 +74,7 @@ function Hero({ featured }: HeroProps) {
           {featured ? (
             <Link
               href={`/anime/${featured.id}`}
-              className="group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-[#161921] ring-1 ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+              className="group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-app-soft ring-1 ring-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
             >
               <Image
                 src={shikimoriImageUrl(featured.image?.original)}

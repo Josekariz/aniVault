@@ -11,8 +11,9 @@ import AnimeDetailHero from "@/components/detail/AnimeDetailHero";
 import AnimeMeta from "@/components/detail/AnimeMeta";
 import AnimeScreenshots from "@/components/detail/AnimeScreenshots";
 import RelatedAnime from "@/components/detail/RelatedAnime";
-import RecommendSection from "@/components/recommendations/RecommendSection";
+import RecommendChat from "@/components/recommendations/RecommendChat";
 import { shikimoriImageUrl } from "@/lib/shikimori";
+import { resolveDisplaySynopsis } from "@/lib/synopsis";
 import type { AnimeListItem, AnimeRelated } from "@/types/anime";
 
 interface AnimePageProps {
@@ -24,8 +25,9 @@ export async function generateMetadata({
 }: AnimePageProps): Promise<Metadata> {
   try {
     const anime = await fetchAnimeDetail(params.id);
+    const synopsis = await resolveDisplaySynopsis(anime);
     const description =
-      anime.description?.slice(0, 160) ||
+      synopsis.text.slice(0, 160) ||
       `${anime.name} — details, related titles, and more on Anime Vault.`;
 
     return {
@@ -56,9 +58,16 @@ export default async function AnimePage({ params }: AnimePageProps) {
     notFound();
   }
 
-  const [relatedResult, similarResult] = await Promise.allSettled([
-    fetchRelatedAnime(id),
-    fetchSimilarAnime(id),
+  const [relatedResult, similarResult, synopsis] = await Promise.all([
+    fetchRelatedAnime(id).then(
+      (value) => ({ status: "fulfilled" as const, value }),
+      (reason) => ({ status: "rejected" as const, reason })
+    ),
+    fetchSimilarAnime(id).then(
+      (value) => ({ status: "fulfilled" as const, value }),
+      (reason) => ({ status: "rejected" as const, reason })
+    ),
+    resolveDisplaySynopsis(anime),
   ]);
 
   const related: AnimeRelated[] =
@@ -69,14 +78,10 @@ export default async function AnimePage({ params }: AnimePageProps) {
   const relatedFailed = relatedResult.status === "rejected";
   const similarFailed = similarResult.status === "rejected";
 
-  const synopsis =
-    anime.description?.trim() ||
-    "No synopsis is available for this title yet.";
-
   return (
-    <main className="flex flex-col gap-12 px-8 py-10 sm:gap-14 sm:px-16 sm:py-14">
+    <main className="relative flex flex-col gap-12 px-8 py-10 sm:gap-14 sm:px-16 sm:py-14">
       <nav aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center gap-2 text-sm text-white/45">
+        <ol className="flex flex-wrap items-center gap-2 text-sm text-white/55">
           <li>
             <Link
               href="/"
@@ -85,10 +90,10 @@ export default async function AnimePage({ params }: AnimePageProps) {
               Explore
             </Link>
           </li>
-          <li aria-hidden className="text-white/25">
+          <li aria-hidden className="text-white/30">
             /
           </li>
-          <li className="truncate text-white/70">{anime.name}</li>
+          <li className="truncate text-white/80">{anime.name}</li>
         </ol>
       </nav>
 
@@ -102,22 +107,13 @@ export default async function AnimePage({ params }: AnimePageProps) {
         >
           Synopsis
         </h2>
-        <p className="max-w-3xl whitespace-pre-line text-base leading-relaxed text-white/70">
-          {synopsis}
+        <p className="max-w-3xl whitespace-pre-line text-base leading-relaxed text-white/80">
+          {synopsis.text}
         </p>
-        {anime.description_source ? (
-          <p className="text-xs text-white/35">
-            Source: {anime.description_source}
-          </p>
+        {synopsis.note ? (
+          <p className="text-xs text-white/45">{synopsis.note}</p>
         ) : null}
       </section>
-
-      <RecommendSection
-        animeId={anime.id}
-        name={anime.name}
-        genres={(anime.genres ?? []).map((genre) => genre.name)}
-        synopsis={anime.description}
-      />
 
       <AnimeScreenshots
         screenshots={anime.screenshots ?? []}
@@ -135,6 +131,14 @@ export default async function AnimePage({ params }: AnimePageProps) {
       ) : (
         <RelatedAnime related={related} similar={similar} />
       )}
+
+      <RecommendChat
+        animeId={anime.id}
+        name={anime.name}
+        genres={(anime.genres ?? []).map((genre) => genre.name)}
+        synopsis={synopsis.text}
+        similar={similar}
+      />
     </main>
   );
 }

@@ -13,7 +13,7 @@ export default function AnimeGrid({
 }: AnimeGridProps) {
   if (anime.length === 0) {
     return (
-      <p className="rounded-xl border border-white/10 bg-[#161921] px-6 py-10 text-center text-white/60">
+      <p className="rounded-xl border border-white/12 bg-app-soft px-6 py-10 text-center text-white/65">
         {emptyMessage}
       </p>
     );

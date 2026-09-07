@@ -4,16 +4,19 @@
 
 :root {
   color-scheme: dark;
-  --bg: #0f1117;
-  --surface: #161921;
+  --bg: #151822;
+  --bg-elevated: #1c2130;
+  --surface: #222836;
+  --surface-hover: #2a3142;
   --accent-from: #ff5956;
   --accent-to: #ee1e38;
   --score: #ffad49;
+  --text-muted: rgba(255, 255, 255, 0.72);
 }
 
 body {
-  background-color: #000;
-  color: #fff;
+  background-color: #10131a;
+  color: #f3f4f8;
 }
 
 .red-gradient {
