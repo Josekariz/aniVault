@@ -11,6 +11,7 @@ import AnimeDetailHero from "@/components/detail/AnimeDetailHero";
 import AnimeMeta from "@/components/detail/AnimeMeta";
 import AnimeScreenshots from "@/components/detail/AnimeScreenshots";
 import RelatedAnime from "@/components/detail/RelatedAnime";
+import RecommendSection from "@/components/recommendations/RecommendSection";
 import { shikimoriImageUrl } from "@/lib/shikimori";
 import type { AnimeListItem, AnimeRelated } from "@/types/anime";
 
@@ -110,6 +111,13 @@ export default async function AnimePage({ params }: AnimePageProps) {
           </p>
         ) : null}
       </section>
+
+      <RecommendSection
+        animeId={anime.id}
+        name={anime.name}
+        genres={(anime.genres ?? []).map((genre) => genre.name)}
+        synopsis={anime.description}
+      />
 
       <AnimeScreenshots
         screenshots={anime.screenshots ?? []}

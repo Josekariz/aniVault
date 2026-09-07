@@ -58,7 +58,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <>
-      {!search && !genre ? <Hero /> : null}
+      {!search && !genre ? <Hero featured={data[0] ?? null} /> : null}
 
       <main
         id="explore"
