@@ -2,17 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+  --bg: #0f1117;
+  --surface: #161921;
+  --accent-from: #ff5956;
+  --accent-to: #ee1e38;
+  --score: #ffad49;
+}
+
 body {
   background-color: #000;
+  color: #fff;
 }
 
 .red-gradient {
-  background: linear-gradient(92deg, #ff5956 2.87%, #ee1e38 96.18%);
+  background: linear-gradient(92deg, var(--accent-from) 2.87%, var(--accent-to) 96.18%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-:root {
-  color-scheme: dark;
+:focus-visible {
+  outline: 2px solid var(--accent-from);
+  outline-offset: 2px;
 }
