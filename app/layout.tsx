@@ -28,10 +28,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${body.variable} ${display.variable} bg-black font-sans antialiased`}>
-        <div className="mx-auto min-h-screen max-w-7xl bg-canvas text-ink">
+      <body
+        className={`${body.variable} ${display.variable} bg-canvas font-sans text-ink antialiased`}
+      >
+        {/* Full-bleed shell — no fixed max-width cage that leaves empty side bands on ultrawide. */}
+        <div className="flex min-h-screen w-full flex-col bg-canvas">
           <Navbar />
-          {children}
+          <div className="flex-1">{children}</div>
           <Footer />
         </div>
       </body>

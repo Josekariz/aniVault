@@ -128,7 +128,7 @@ export default async function AnimePage({ params }: AnimePageProps) {
   const quick = getQuickSynopsis(anime);
 
   return (
-    <main className="relative flex flex-col gap-12 px-8 py-10 sm:gap-14 sm:px-16 sm:py-14">
+    <main className="page-shell relative flex flex-col gap-12 py-10 sm:gap-14 sm:py-14">
       <nav aria-label="Breadcrumb">
         <ol className="flex flex-wrap items-center gap-2 text-sm text-ink-subtle">
           <li>
