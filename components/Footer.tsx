@@ -3,7 +3,8 @@ import Link from "next/link";
 
 function Footer() {
   return (
-    <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-surface px-8 py-6 sm:px-16">
+    <footer className="mt-8 border-t border-white/10 bg-surface">
+      <div className="page-shell flex flex-wrap items-center justify-between gap-4 py-6">
       <p className="text-sm font-medium text-ink-muted">
         © {new Date().getFullYear()} Anime Vault
       </p>
@@ -47,6 +48,7 @@ function Footer() {
         >
           <Image src="/twitter.svg" alt="" width={19} height={19} />
         </a>
+      </div>
       </div>
     </footer>
   );

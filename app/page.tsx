@@ -62,7 +62,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
       <main
         id="explore"
-        className="flex scroll-mt-24 flex-col gap-8 px-8 py-12 sm:gap-10 sm:px-16 sm:py-16"
+        className="page-shell flex scroll-mt-24 flex-col gap-8 py-12 sm:gap-10 sm:py-16"
       >
         <div className="flex flex-col gap-2">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">

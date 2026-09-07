@@ -11,7 +11,7 @@
 }
 
 body {
-  background-color: #000;
+  background-color: #0f1117;
   color: var(--ink);
 }
 
@@ -25,4 +25,11 @@ body {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+@layer components {
+  /* Fluid content width: comfortable on laptop, fills large monitors without huge gutters. */
+  .page-shell {
+    @apply mx-auto w-full max-w-[1200px] px-6 sm:px-10 lg:px-14 xl:max-w-[1400px] xl:px-16 2xl:max-w-[1680px] min-[1800px]:max-w-[1840px] min-[1800px]:px-20;
+  }
 }

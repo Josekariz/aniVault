@@ -2,7 +2,7 @@ import { AnimeSkeleton } from "@/components/AnimeSkeleton";
 
 export default function AnimeLoading() {
   return (
-    <main className="flex flex-col gap-12 px-8 py-10 sm:gap-14 sm:px-16 sm:py-14">
+    <main className="page-shell flex flex-col gap-12 py-10 sm:gap-14 sm:py-14">
       <div className="h-4 w-40 animate-pulse rounded bg-surface-2" />
 
       <div className="grid gap-10 lg:grid-cols-[300px_1fr]">

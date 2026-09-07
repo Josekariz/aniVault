@@ -204,8 +204,8 @@ function SearchField() {
 
 function NavbarInner() {
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/8 bg-canvas/85 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:gap-6 sm:px-8 lg:px-16">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-canvas/90 backdrop-blur-xl">
+      <nav className="page-shell flex items-center gap-4 py-3 sm:gap-6">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -241,8 +241,8 @@ export default function Navbar() {
   return (
     <Suspense
       fallback={
-        <header className="sticky top-0 z-40 border-b border-ink/8 bg-canvas/85 backdrop-blur-xl">
-          <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:px-8 lg:px-16">
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-canvas/90 backdrop-blur-xl">
+          <div className="page-shell flex h-[60px] items-center">
             <div className="h-9 w-full max-w-md animate-pulse rounded-full bg-surface" />
           </div>
         </header>

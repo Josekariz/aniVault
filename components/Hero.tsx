@@ -18,7 +18,7 @@ function Hero({ featured }: HeroProps) {
       <div className="absolute inset-0 bg-gradient-to-r from-[#10131a]/92 via-[#10131a]/75 to-[#10131a]/35" />
       <div className="absolute -left-16 top-10 h-64 w-64 rounded-full bg-accent/30 blur-3xl" />
 
-      <div className="relative grid items-center gap-10 px-8 py-16 sm:px-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="page-shell relative grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr]">
         <MotionDiv
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
