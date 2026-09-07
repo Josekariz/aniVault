@@ -32,9 +32,9 @@ function AnimeCard({ anime, index }: Prop) {
     >
       <Link
         href={`/anime/${anime.id}`}
-        className="block w-full rounded-xl outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-[#ff5956] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F1117]"
+        className="block w-full rounded-xl outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-[#ff5956] focus-visible:ring-offset-2 focus-visible:ring-offset-app"
       >
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-[#161921]">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-app-soft">
           <Image
             src={shikimoriImageUrl(anime.image?.original)}
             alt={anime.name}

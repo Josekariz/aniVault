@@ -37,9 +37,9 @@ export default function RelatedAnime({ related, similar }: RelatedAnimeProps) {
               <li key={`${entry.relation}-${entry.anime.id}`}>
                 <Link
                   href={`/anime/${entry.anime.id}`}
-                  className="group flex gap-4 rounded-xl border border-white/5 bg-[#161921] p-3 transition hover:border-[#ff5956]/40 hover:bg-[#1a1e28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+                  className="group flex gap-4 rounded-xl border border-white/10 bg-app-soft p-3 transition hover:border-[#ff5956]/40 hover:bg-app-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
                 >
-                  <span className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-[#0F1117]">
+                  <span className="relative h-24 w-16 shrink-0 overflow-hidden rounded-lg bg-app">
                     <Image
                       src={shikimoriImageUrl(entry.anime.image?.original)}
                       alt=""

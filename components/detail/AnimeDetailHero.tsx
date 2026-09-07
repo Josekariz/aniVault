@@ -27,7 +27,7 @@ export default function AnimeDetailHero({ anime }: AnimeDetailHeroProps) {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="grid gap-10 lg:grid-cols-[300px_1fr] lg:items-start"
     >
-      <div className="relative mx-auto aspect-[2/3] w-full max-w-[300px] overflow-hidden rounded-2xl bg-[#161921] shadow-2xl shadow-black/50 ring-1 ring-white/10">
+      <div className="relative mx-auto aspect-[2/3] w-full max-w-[300px] overflow-hidden rounded-2xl bg-app-soft shadow-2xl shadow-black/30 ring-1 ring-white/15">
         <Image
           src={shikimoriImageUrl(anime.image?.original)}
           alt={anime.name}

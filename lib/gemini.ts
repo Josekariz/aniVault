@@ -3,6 +3,11 @@ import type { RecommendationItem } from "@/types/recommend";
 const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+/** Keep prompts and completions small — this feature is intentionally conservative. */
+const MAX_RECS = 3;
+const MAX_SYNOPSIS_CHARS = 180;
+const MAX_OUTPUT_TOKENS = 400;
+
 export class GeminiError extends Error {
   code: "missing_key" | "rate_limit" | "upstream" | "invalid_response";
   status: number;
@@ -34,6 +39,7 @@ interface GeminiGenerateResponse {
 }
 
 interface RawRecommendationPayload {
+  reply?: unknown;
   recommendations?: {
     title?: unknown;
     reason?: unknown;
@@ -44,24 +50,34 @@ export interface GeminiRecommendInput {
   name: string;
   genres: string[];
   synopsis?: string | null;
+  message?: string;
+}
+
+export interface GeminiRecommendResult {
+  reply: string;
+  recommendations: RecommendationItem[];
 }
 
 function buildPrompt(input: GeminiRecommendInput): string {
   const genres =
-    input.genres.length > 0 ? input.genres.join(", ") : "unknown";
+    input.genres.length > 0 ? input.genres.slice(0, 5).join(", ") : "unknown";
   const synopsis = input.synopsis?.trim()
-    ? input.synopsis.trim().slice(0, 600)
+    ? input.synopsis.trim().slice(0, MAX_SYNOPSIS_CHARS)
     : "No synopsis provided.";
+  const userAsk = input.message?.trim()
+    ? input.message.trim().slice(0, 160)
+    : "Suggest similar anime a fan would enjoy next.";
 
   return [
-    "You are an anime recommendation expert.",
-    "Suggest exactly 4 anime similar in tone, themes, or audience to the title below.",
-    "Do not recommend the same title. Prefer well-known shows that exist on MyAnimeList/Shikimori.",
-    "Each reason must be one concise sentence explaining why a fan of the source would enjoy it.",
+    "Recommend anime. Be brief.",
+    `Return JSON with reply (1 short sentence) and exactly ${MAX_RECS} recommendations.`,
+    "Each recommendation needs title + one short reason.",
+    "Do not recommend the source title. Prefer well-known shows.",
     "",
-    `Title: ${input.name}`,
+    `Source title: ${input.name}`,
     `Genres: ${genres}`,
-    `Synopsis: ${synopsis}`,
+    `Synopsis excerpt: ${synopsis}`,
+    `User ask: ${userAsk}`,
   ].join("\n");
 }
 
@@ -81,7 +97,7 @@ function extractText(payload: GeminiGenerateResponse): string {
   return text;
 }
 
-function parseRecommendations(text: string): RecommendationItem[] {
+function parseRecommendations(text: string): GeminiRecommendResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -92,9 +108,10 @@ function parseRecommendations(text: string): RecommendationItem[] {
     );
   }
 
+  const payload = parsed as RawRecommendationPayload;
   const list = Array.isArray(parsed)
     ? parsed
-    : (parsed as RawRecommendationPayload).recommendations;
+    : payload.recommendations;
 
   if (!Array.isArray(list)) {
     throw new GeminiError(
@@ -114,7 +131,7 @@ function parseRecommendations(text: string): RecommendationItem[] {
       return { title, reason };
     })
     .filter((item): item is RecommendationItem => item !== null)
-    .slice(0, 4);
+    .slice(0, MAX_RECS);
 
   if (recommendations.length === 0) {
     throw new GeminiError(
@@ -123,12 +140,17 @@ function parseRecommendations(text: string): RecommendationItem[] {
     );
   }
 
-  return recommendations;
+  const reply =
+    typeof payload.reply === "string" && payload.reply.trim()
+      ? payload.reply.trim().slice(0, 200)
+      : `Here are ${recommendations.length} picks you might like.`;
+
+  return { reply, recommendations };
 }
 
 export async function getGeminiRecommendations(
   input: GeminiRecommendInput
-): Promise<RecommendationItem[]> {
+): Promise<GeminiRecommendResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new GeminiError(
@@ -144,11 +166,13 @@ export async function getGeminiRecommendations(
     body: JSON.stringify({
       contents: [{ parts: [{ text: buildPrompt(input) }] }],
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.45,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
           properties: {
+            reply: { type: "STRING" },
             recommendations: {
               type: "ARRAY",
               items: {
@@ -161,7 +185,7 @@ export async function getGeminiRecommendations(
               },
             },
           },
-          required: ["recommendations"],
+          required: ["reply", "recommendations"],
         },
       },
     }),
@@ -175,7 +199,10 @@ export async function getGeminiRecommendations(
       payload.error?.message ||
       `Gemini request failed with status ${response.status}`;
 
-    if (response.status === 429 || payload.error?.status === "RESOURCE_EXHAUSTED") {
+    if (
+      response.status === 429 ||
+      payload.error?.status === "RESOURCE_EXHAUSTED"
+    ) {
       throw new GeminiError(message, "rate_limit", 429);
     }
 

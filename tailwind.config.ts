@@ -8,6 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        app: {
+          DEFAULT: "#151822",
+          elevated: "#1c2130",
+          soft: "#222836",
+          hover: "#2a3142",
+        },
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":

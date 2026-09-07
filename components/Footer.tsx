@@ -3,8 +3,8 @@ import Link from "next/link";
 
 function Footer() {
   return (
-    <footer className="flex flex-wrap items-center justify-between gap-4 bg-[#161921] px-8 py-6 sm:px-16">
-      <p className="text-sm font-medium text-white/70">
+    <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-white/8 bg-app-elevated px-8 py-6 sm:px-16">
+      <p className="text-sm font-medium text-white/75">
         © {new Date().getFullYear()} Anime Vault
       </p>
       <Link

@@ -133,7 +133,7 @@ function SearchField() {
           onBlur={() => {
             blurRef.current = setTimeout(() => setOpen(false), 150);
           }}
-          className="w-full rounded-xl border border-white/10 bg-[#161921] py-2.5 pl-4 pr-10 text-sm text-white placeholder:text-white/35 transition hover:border-white/20 focus:border-[#ff5956]/60 focus:outline-none focus:ring-2 focus:ring-[#ff5956]/40"
+          className="w-full rounded-xl border border-white/12 bg-app-soft py-2.5 pl-4 pr-10 text-sm text-white placeholder:text-white/40 transition hover:border-white/20 focus:border-[#ff5956]/60 focus:outline-none focus:ring-2 focus:ring-[#ff5956]/40"
         />
         {isPending ? (
           <span
@@ -148,7 +148,7 @@ function SearchField() {
       </form>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-xl border border-white/10 bg-[#12151c] shadow-2xl shadow-black/50">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-xl border border-white/12 bg-app-elevated shadow-2xl shadow-black/40">
           {suggestError ? (
             <p className="px-4 py-3 text-sm text-white/55">
               Search failed. Showing catalog results from the URL instead.
@@ -199,7 +199,7 @@ function SearchField() {
 
 function NavbarInner() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0F1117]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-app/90 backdrop-blur-md">
       <nav className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:gap-6 sm:px-8 lg:px-16">
         <Link
           href="/"
@@ -223,7 +223,7 @@ function NavbarInner() {
 
         <Link
           href="/#explore"
-          className="hidden shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956] md:inline-flex"
+          className="hidden shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956] md:inline-flex"
         >
           Explore
         </Link>
@@ -236,9 +236,9 @@ export default function Navbar() {
   return (
     <Suspense
       fallback={
-        <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0F1117]/90 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-app/90 backdrop-blur-md">
           <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:px-8 lg:px-16">
-            <div className="h-9 w-full max-w-md animate-pulse rounded-xl bg-[#161921]" />
+            <div className="h-9 w-full max-w-md animate-pulse rounded-xl bg-app-soft" />
           </div>
         </header>
       }
