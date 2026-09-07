@@ -91,6 +91,29 @@ export function canAffordAniListRequest(
   return rateLimitState.remaining > minRemaining;
 }
 
+/**
+ * Temporary diagnostics for deployed failures.
+ * Server logs only — never returned to the client / UI.
+ */
+function logAniListFailure(details: {
+  kind: string;
+  httpStatus?: number;
+  rateLimitRemaining?: string | null;
+  rateLimitLimit?: string | null;
+  retryAfter?: string | null;
+  rateLimitReset?: string | null;
+  bodyPreview?: string;
+  message?: string;
+}) {
+  console.error(
+    "[anilist]",
+    JSON.stringify({
+      at: new Date().toISOString(),
+      ...details,
+    })
+  );
+}
+
 export async function anilistRequest<T>(
   query: string,
   variables: Record<string, unknown> = {},
@@ -121,12 +144,30 @@ export async function anilistRequest<T>(
 
     updateRateLimitFromHeaders(response.headers);
 
+    const rateHeaders = {
+      rateLimitRemaining: response.headers.get("X-RateLimit-Remaining"),
+      rateLimitLimit: response.headers.get("X-RateLimit-Limit"),
+      retryAfter: response.headers.get("Retry-After"),
+      rateLimitReset: response.headers.get("X-RateLimit-Reset"),
+    };
+
     if (response.status === 429) {
       const retryAfter =
         parseHeaderInt(response.headers.get("Retry-After")) ?? 60;
-      const resetUnix = parseHeaderInt(response.headers.get("X-RateLimit-Reset"));
+      const resetUnix = parseHeaderInt(
+        response.headers.get("X-RateLimit-Reset")
+      );
       if (resetUnix != null) rateLimitState.resetAtMs = resetUnix * 1000;
       rateLimitState.remaining = 0;
+
+      const bodyPreview = (await response.text()).slice(0, 800);
+      logAniListFailure({
+        kind: "http_429_rate_limit",
+        httpStatus: 429,
+        ...rateHeaders,
+        bodyPreview,
+        message: `Retry after ${retryAfter}s`,
+      });
 
       throw new AniListError(
         `AniList rate limit exceeded. Retry after ${retryAfter}s.`,
@@ -136,10 +177,18 @@ export async function anilistRequest<T>(
       );
     }
 
+    const rawText = await response.text();
     let envelope: GraphQLEnvelope<T>;
     try {
-      envelope = (await response.json()) as GraphQLEnvelope<T>;
+      envelope = JSON.parse(rawText) as GraphQLEnvelope<T>;
     } catch {
+      logAniListFailure({
+        kind: "non_json_body",
+        httpStatus: response.status,
+        ...rateHeaders,
+        bodyPreview: rawText.slice(0, 800),
+        message: response.statusText,
+      });
       throw new AniListError(
         "AniList returned a non-JSON response.",
         response.status || 502,
@@ -153,6 +202,14 @@ export async function anilistRequest<T>(
       const status = first.status ?? response.status ?? 502;
       const message = first.message ?? "AniList GraphQL error";
 
+      logAniListFailure({
+        kind: "graphql_errors_array",
+        httpStatus: response.status,
+        ...rateHeaders,
+        bodyPreview: rawText.slice(0, 800),
+        message,
+      });
+
       if (status === 429 || /too many requests/i.test(message)) {
         throw new AniListError(message, 429, "rate_limit");
       }
@@ -164,6 +221,13 @@ export async function anilistRequest<T>(
     }
 
     if (!response.ok) {
+      logAniListFailure({
+        kind: response.status === 403 ? "http_403_forbidden" : "http_non_ok",
+        httpStatus: response.status,
+        ...rateHeaders,
+        bodyPreview: rawText.slice(0, 800),
+        message: response.statusText,
+      });
       throw new AniListError(
         `AniList request failed: ${response.status} ${response.statusText}`,
         response.status,
@@ -172,6 +236,12 @@ export async function anilistRequest<T>(
     }
 
     if (envelope.data == null) {
+      logAniListFailure({
+        kind: "empty_data_payload",
+        httpStatus: response.status,
+        ...rateHeaders,
+        bodyPreview: rawText.slice(0, 800),
+      });
       throw new AniListError(
         "AniList returned an empty data payload.",
         502,
@@ -184,8 +254,17 @@ export async function anilistRequest<T>(
     if (error instanceof AniListError) throw error;
 
     if (error instanceof Error && error.name === "AbortError") {
+      logAniListFailure({
+        kind: "timeout",
+        message: `Aborted after ${FETCH_TIMEOUT_MS}ms`,
+      });
       throw new AniListError("AniList request timed out.", 504, "timeout");
     }
+
+    logAniListFailure({
+      kind: "fetch_threw",
+      message: error instanceof Error ? error.message : String(error),
+    });
 
     throw new AniListError(
       error instanceof Error ? error.message : "AniList request failed",
