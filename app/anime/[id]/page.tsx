@@ -1,13 +1,45 @@
-import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import AnimeGrid from "@/components/AnimeGrid";
-import { fetchAnimeDetail, fetchSimilarAnime } from "@/app/actions/anime";
+import {
+  fetchAnimeDetail,
+  fetchRelatedAnime,
+  fetchSimilarAnime,
+} from "@/app/actions/anime";
+import AnimeDetailHero from "@/components/detail/AnimeDetailHero";
+import AnimeMeta from "@/components/detail/AnimeMeta";
+import AnimeScreenshots from "@/components/detail/AnimeScreenshots";
+import RelatedAnime from "@/components/detail/RelatedAnime";
+import RecommendSection from "@/components/recommendations/RecommendSection";
 import { shikimoriImageUrl } from "@/lib/shikimori";
+import type { AnimeListItem, AnimeRelated } from "@/types/anime";
 
 interface AnimePageProps {
   params: { id: string };
+}
+
+export async function generateMetadata({
+  params,
+}: AnimePageProps): Promise<Metadata> {
+  try {
+    const anime = await fetchAnimeDetail(params.id);
+    const description =
+      anime.description?.slice(0, 160) ||
+      `${anime.name} — details, related titles, and more on Anime Vault.`;
+
+    return {
+      title: `${anime.name} | Anime Vault`,
+      description,
+      openGraph: {
+        title: anime.name,
+        description,
+        images: [shikimoriImageUrl(anime.image?.original)],
+      },
+    };
+  } catch {
+    return { title: "Anime | Anime Vault" };
+  }
 }
 
 export default async function AnimePage({ params }: AnimePageProps) {
@@ -24,115 +56,85 @@ export default async function AnimePage({ params }: AnimePageProps) {
     notFound();
   }
 
-  let similar: Awaited<ReturnType<typeof fetchSimilarAnime>> = [];
-  try {
-    similar = await fetchSimilarAnime(id);
-  } catch {
-    similar = [];
-  }
+  const [relatedResult, similarResult] = await Promise.allSettled([
+    fetchRelatedAnime(id),
+    fetchSimilarAnime(id),
+  ]);
+
+  const related: AnimeRelated[] =
+    relatedResult.status === "fulfilled" ? relatedResult.value : [];
+  const similar: AnimeListItem[] =
+    similarResult.status === "fulfilled" ? similarResult.value : [];
+
+  const relatedFailed = relatedResult.status === "rejected";
+  const similarFailed = similarResult.status === "rejected";
 
   const synopsis =
     anime.description?.trim() ||
     "No synopsis is available for this title yet.";
 
   return (
-    <main className="flex flex-col gap-12 px-8 py-12 sm:px-16 sm:py-16">
-      <Link
-        href="/"
-        className="w-fit text-sm font-medium text-white/50 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
-      >
-        ← Back to explore
-      </Link>
+    <main className="flex flex-col gap-12 px-8 py-10 sm:gap-14 sm:px-16 sm:py-14">
+      <nav aria-label="Breadcrumb">
+        <ol className="flex flex-wrap items-center gap-2 text-sm text-white/45">
+          <li>
+            <Link
+              href="/"
+              className="transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+            >
+              Explore
+            </Link>
+          </li>
+          <li aria-hidden className="text-white/25">
+            /
+          </li>
+          <li className="truncate text-white/70">{anime.name}</li>
+        </ol>
+      </nav>
 
-      <section className="grid gap-10 lg:grid-cols-[280px_1fr]">
-        <div className="relative mx-auto aspect-[2/3] w-full max-w-[280px] overflow-hidden rounded-2xl bg-[#161921] shadow-2xl shadow-black/40">
-          <Image
-            src={shikimoriImageUrl(anime.image?.original)}
-            alt={anime.name}
-            fill
-            priority
-            sizes="280px"
-            className="object-cover"
-          />
-        </div>
+      <AnimeDetailHero anime={anime} />
+      <AnimeMeta anime={anime} />
 
-        <div className="flex flex-col gap-6">
-          <div className="space-y-3">
-            <p className="text-sm uppercase tracking-[0.2em] text-white/40">
-              {anime.kind ?? "Anime"}
-              {anime.status ? ` · ${anime.status}` : ""}
-            </p>
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              {anime.name}
-            </h1>
-            {anime.russian ? (
-              <p className="text-lg text-white/50">{anime.russian}</p>
-            ) : null}
-          </div>
-
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-xl bg-[#161921] px-4 py-3">
-              <dt className="text-xs uppercase tracking-wide text-white/40">
-                Score
-              </dt>
-              <dd className="mt-1 text-lg font-semibold text-[#FFAD49]">
-                {anime.score && anime.score !== "0.0" ? anime.score : "N/A"}
-              </dd>
-            </div>
-            <div className="rounded-xl bg-[#161921] px-4 py-3">
-              <dt className="text-xs uppercase tracking-wide text-white/40">
-                Episodes
-              </dt>
-              <dd className="mt-1 text-lg font-semibold text-white">
-                {anime.episodes || anime.episodes_aired || "—"}
-              </dd>
-            </div>
-            <div className="rounded-xl bg-[#161921] px-4 py-3">
-              <dt className="text-xs uppercase tracking-wide text-white/40">
-                Rating
-              </dt>
-              <dd className="mt-1 text-lg font-semibold capitalize text-white">
-                {anime.rating ?? "—"}
-              </dd>
-            </div>
-            <div className="rounded-xl bg-[#161921] px-4 py-3">
-              <dt className="text-xs uppercase tracking-wide text-white/40">
-                Aired
-              </dt>
-              <dd className="mt-1 text-lg font-semibold text-white">
-                {anime.aired_on ?? "—"}
-              </dd>
-            </div>
-          </dl>
-
-          {anime.genres?.length ? (
-            <ul className="flex flex-wrap gap-2">
-              {anime.genres.map((genre) => (
-                <li
-                  key={genre.id}
-                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70"
-                >
-                  {genre.name}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-white">Synopsis</h2>
-            <p className="max-w-3xl whitespace-pre-line leading-relaxed text-white/70">
-              {synopsis}
-            </p>
-          </div>
-        </div>
+      <section className="space-y-3" aria-labelledby="synopsis-heading">
+        <h2
+          id="synopsis-heading"
+          className="text-2xl font-bold tracking-tight text-white"
+        >
+          Synopsis
+        </h2>
+        <p className="max-w-3xl whitespace-pre-line text-base leading-relaxed text-white/70">
+          {synopsis}
+        </p>
+        {anime.description_source ? (
+          <p className="text-xs text-white/35">
+            Source: {anime.description_source}
+          </p>
+        ) : null}
       </section>
 
-      {similar.length > 0 ? (
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold text-white">Similar anime</h2>
-          <AnimeGrid anime={similar.slice(0, 8)} />
-        </section>
-      ) : null}
+      <RecommendSection
+        animeId={anime.id}
+        name={anime.name}
+        genres={(anime.genres ?? []).map((genre) => genre.name)}
+        synopsis={anime.description}
+      />
+
+      <AnimeScreenshots
+        screenshots={anime.screenshots ?? []}
+        title={anime.name}
+      />
+
+      {relatedFailed && similarFailed ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"
+        >
+          Related titles couldn&apos;t be loaded right now. The main details
+          above are still available.
+        </div>
+      ) : (
+        <RelatedAnime related={related} similar={similar} />
+      )}
     </main>
   );
 }
