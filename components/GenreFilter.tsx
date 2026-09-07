@@ -4,25 +4,24 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-import { ANIME_GENRES } from "@/lib/anilist/genres";
+import type { Genre } from "@/types/anime";
 
 interface GenreFilterProps {
-  /** Optional override; defaults to the hardcoded AniList genre enum. */
-  genres?: readonly string[];
+  genres: Genre[];
 }
 
-function buildHref(searchParams: URLSearchParams, genre?: string) {
+function buildHref(searchParams: URLSearchParams, genreId?: number) {
   const params = new URLSearchParams(searchParams.toString());
-  if (!genre) {
+  if (genreId === undefined) {
     params.delete("genre");
   } else {
-    params.set("genre", genre);
+    params.set("genre", String(genreId));
   }
   const qs = params.toString();
   return qs ? `/?${qs}` : "/";
 }
 
-function GenreFilterInner({ genres = ANIME_GENRES }: GenreFilterProps) {
+function GenreFilterInner({ genres }: GenreFilterProps) {
   const searchParams = useSearchParams();
   const active = searchParams.get("genre");
 
@@ -68,13 +67,13 @@ function GenreFilterInner({ genres = ANIME_GENRES }: GenreFilterProps) {
         </Link>
         {genres.map((genre) => (
           <Link
-            key={genre}
-            href={buildHref(searchParams, genre)}
+            key={genre.id}
+            href={buildHref(searchParams, genre.id)}
             scroll={false}
             role="listitem"
-            className={chipClass(active === genre)}
+            className={chipClass(active === String(genre.id))}
           >
-            {genre}
+            {genre.name}
           </Link>
         ))}
       </div>

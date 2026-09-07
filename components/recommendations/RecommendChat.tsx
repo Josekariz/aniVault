@@ -22,8 +22,6 @@ interface RecommendChatProps {
   name: string;
   genres: string[];
   synopsis?: string | null;
-  /** Detail-page AniList recommendations — avoids re-fetching Media in /api/recommend. */
-  seedRecommendations?: RecommendationItem[];
 }
 
 type ChatMessage =
@@ -83,8 +81,8 @@ function RecCards({
   return (
     <ul className="space-y-2">
       {items.map((item, index) => {
-        const href = item.anilistId
-          ? `/anime/${item.anilistId}`
+        const href = item.shikimoriId
+          ? `/anime/${item.shikimoriId}`
           : undefined;
         const inner = (
           <>
@@ -124,7 +122,6 @@ export default function RecommendChat({
   name,
   genres,
   synopsis,
-  seedRecommendations = [],
 }: RecommendChatProps) {
   const hydrated = useRef(false);
   const [open, setOpen] = useState(false);
@@ -224,13 +221,6 @@ export default function RecommendChat({
       message: options.message,
       useGemini: options.useGemini,
       excludeIds: shownIds,
-      seedRecommendations: seedRecommendations
-        .filter((item) => typeof item.anilistId === "number")
-        .map((item) => ({
-          anilistId: item.anilistId as number,
-          title: item.title,
-          reason: item.reason,
-        })),
     };
 
     try {
@@ -265,7 +255,7 @@ export default function RecommendChat({
       }
 
       const nextIds = payload.recommendations
-        .map((item) => item.anilistId)
+        .map((item) => item.shikimoriId)
         .filter((id): id is number => typeof id === "number");
       setShownIds((prev) => Array.from(new Set([...prev, ...nextIds])));
 

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { MotionDiv } from "./MotionDiv";
-import { formatScoreOutOfTen } from "@/lib/anilist/format";
+import { shikimoriImageUrl } from "@/lib/shikimori";
 import type { AnimeListItem } from "@/types/anime";
 
 interface Prop {
@@ -16,8 +16,7 @@ const variants = {
 };
 
 function AnimeCard({ anime, index }: Prop) {
-  const score = formatScoreOutOfTen(anime.averageScore);
-  const cover = anime.coverImage || "/logo.svg";
+  const episodeCount = anime.episodes || anime.episodes_aired || "—";
 
   return (
     <MotionDiv
@@ -37,23 +36,23 @@ function AnimeCard({ anime, index }: Prop) {
       >
         <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-surface-2 shadow-soft">
           <Image
-            src={cover}
-            alt={anime.displayTitle}
+            src={shikimoriImageUrl(anime.image?.original)}
+            alt={anime.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition duration-300 group-hover:scale-[1.03]"
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-          {anime.format ? (
+          {anime.kind ? (
             <span className="absolute right-3 top-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
-              {anime.format.replace(/_/g, " ")}
+              {anime.kind}
             </span>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-2 py-4">
           <h2 className="font-display line-clamp-2 text-lg font-semibold text-ink transition group-hover:text-accent">
-            {anime.displayTitle}
+            {anime.name}
           </h2>
           <div className="flex items-center gap-4 text-sm text-ink-muted">
             <div className="flex items-center gap-1.5">
@@ -64,7 +63,7 @@ function AnimeCard({ anime, index }: Prop) {
                 height={18}
                 className="object-contain opacity-70"
               />
-              <span className="font-medium">{anime.episodes ?? "—"}</span>
+              <span className="font-medium">{episodeCount}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Image
@@ -74,7 +73,9 @@ function AnimeCard({ anime, index }: Prop) {
                 height={16}
                 className="object-contain"
               />
-              <span className="font-medium text-score">{score ?? "N/A"}</span>
+              <span className="font-medium text-score">
+                {anime.score && anime.score !== "0.0" ? anime.score : "N/A"}
+              </span>
             </div>
           </div>
         </div>
