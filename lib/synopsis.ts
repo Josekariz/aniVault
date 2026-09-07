@@ -8,8 +8,14 @@ export function cleanShikimoriText(raw: string | null | undefined): string {
   if (!raw) return "";
 
   return raw
-    .replace(/\[(?:character|anime|manga|person)=[^\]]+\]([\s\S]*?)\[\/\w+\]/gi, "$1")
-    .replace(/\[\/?(?:b|i|url|img|spoiler|quote|right|center|list|\*)[^\]]*\]/gi, "")
+    .replace(
+      /\[(?:character|anime|manga|person)=[^\]]+\]([\s\S]*?)\[\/\w+\]/gi,
+      "$1"
+    )
+    .replace(
+      /\[\/?(?:b|i|url|img|spoiler|quote|right|center|list|\*)[^\]]*\]/gi,
+      ""
+    )
     .replace(/\[\[([^\]]+)\]\]/g, "$1")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
@@ -29,6 +35,29 @@ export function isPrimarilyCyrillic(text: string): boolean {
   return cyrillic >= latin;
 }
 
+/** Fast, sync synopsis for metadata / first paint — never blocks on MAL. */
+export function getQuickSynopsis(anime: AnimeDetail): {
+  text: string;
+  note?: string;
+} {
+  const cleaned = cleanShikimoriText(anime.description);
+  if (!cleaned) {
+    return { text: "No synopsis is available for this title yet." };
+  }
+
+  if (isPrimarilyCyrillic(cleaned)) {
+    return {
+      text: cleaned,
+      note: "Shikimori synopsis (Russian). English may load below when available.",
+    };
+  }
+
+  return {
+    text: cleaned,
+    note: anime.description_source ?? undefined,
+  };
+}
+
 interface JikanAnimeResponse {
   data?: {
     synopsis?: string | null;
@@ -36,15 +65,15 @@ interface JikanAnimeResponse {
 }
 
 /**
- * Prefer an English synopsis for the UI.
- * Shikimori's `description` is often authored in Russian with no separate EN field,
- * so we fall back to Jikan (MAL) when `myanimelist_id` is present.
+ * Prefer an English synopsis when Shikimori only has Russian.
+ * Hard-timeout so detail pages never hang on Jikan.
  */
 export async function resolveDisplaySynopsis(anime: AnimeDetail): Promise<{
   text: string;
   source: "shikimori" | "mal" | "none";
   note?: string;
 }> {
+  const quick = getQuickSynopsis(anime);
   const cleaned = cleanShikimoriText(anime.description);
 
   if (cleaned && !isPrimarilyCyrillic(cleaned)) {
@@ -56,11 +85,15 @@ export async function resolveDisplaySynopsis(anime: AnimeDetail): Promise<{
   }
 
   if (anime.myanimelist_id) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+
     try {
       const response = await fetch(
         `https://api.jikan.moe/v4/anime/${anime.myanimelist_id}`,
         {
           headers: { Accept: "application/json" },
+          signal: controller.signal,
           next: { revalidate: 86400 },
         }
       );
@@ -77,7 +110,9 @@ export async function resolveDisplaySynopsis(anime: AnimeDetail): Promise<{
         }
       }
     } catch {
-      // keep Shikimori text below
+      // fall through
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -92,7 +127,8 @@ export async function resolveDisplaySynopsis(anime: AnimeDetail): Promise<{
   }
 
   return {
-    text: "No synopsis is available for this title yet.",
+    text: quick.text,
     source: "none",
+    note: quick.note,
   };
 }

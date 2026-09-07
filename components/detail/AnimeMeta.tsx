@@ -14,11 +14,11 @@ function MetaCard({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-app-soft px-4 py-3">
-      <dt className="text-xs uppercase tracking-wide text-white/40">{label}</dt>
+    <div className="rounded-2xl border border-ink/8 bg-white px-4 py-3 shadow-sm">
+      <dt className="text-xs uppercase tracking-wide text-ink-subtle">{label}</dt>
       <dd
         className={`mt-1 text-lg font-semibold ${
-          accent ? "text-[#FFAD49]" : "text-white"
+          accent ? "text-score" : "text-ink"
         }`}
       >
         {value}

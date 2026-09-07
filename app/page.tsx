@@ -65,10 +65,10 @@ export default async function Home({ searchParams }: HomeProps) {
         className="flex scroll-mt-24 flex-col gap-8 px-8 py-12 sm:gap-10 sm:px-16 sm:py-16"
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
             {heading}
           </h2>
-          <p className="max-w-xl text-base text-white/55">{subtitle}</p>
+          <p className="max-w-xl text-base text-ink-muted">{subtitle}</p>
         </div>
 
         {genres.length > 0 ? <GenreFilter genres={genres} /> : null}
@@ -76,9 +76,9 @@ export default async function Home({ searchParams }: HomeProps) {
         {loadError ? (
           <div
             role="alert"
-            className="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-8 text-center"
+            className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center"
           >
-            <p className="font-medium text-red-200">{loadError}</p>
+            <p className="font-medium text-red-700">{loadError}</p>
           </div>
         ) : (
           <>

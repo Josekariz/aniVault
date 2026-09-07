@@ -109,4 +109,6 @@ export interface FetchAnimeParams {
   kind?: string;
   status?: string;
   score?: number;
+  /** Comma-separated anime ids to exclude (Shikimori `exclude_ids`). */
+  exclude_ids?: string;
 }

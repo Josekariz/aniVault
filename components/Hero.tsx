@@ -13,51 +13,51 @@ interface HeroProps {
 
 function Hero({ featured }: HeroProps) {
   return (
-    <header className="relative overflow-hidden px-8 py-16 sm:px-16 sm:py-20">
-      <div className="pointer-events-none absolute inset-0 bg-hero bg-cover bg-center opacity-40" />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-app via-app/90 to-app/50" />
-      <div className="pointer-events-none absolute -right-20 top-10 h-72 w-72 rounded-full bg-[#ee1e38]/20 blur-3xl" />
+    <header className="relative overflow-hidden">
+      <div className="absolute inset-0 bg-hero bg-cover bg-center" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#10131a]/92 via-[#10131a]/75 to-[#10131a]/35" />
+      <div className="absolute -left-16 top-10 h-64 w-64 rounded-full bg-accent/30 blur-3xl" />
 
-      <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="relative grid items-center gap-10 px-8 py-16 sm:px-16 sm:py-20 lg:grid-cols-[1.05fr_0.95fr]">
         <MotionDiv
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="flex flex-col gap-7"
+          className="flex flex-col gap-7 text-white"
         >
           <Image
             src="/logo.svg"
             alt="Anime Vault"
-            width={96}
-            height={90}
+            width={88}
+            height={82}
             className="object-contain"
             priority
           />
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/45">
+            <p className="font-display text-xs font-semibold uppercase tracking-[0.24em] text-white/60">
               Anime discovery
             </p>
-            <h1 className="max-w-xl text-5xl font-bold leading-[1.1] text-white sm:text-6xl">
+            <h1 className="font-display max-w-xl text-5xl font-semibold leading-[1.05] sm:text-6xl">
               Explore The <span className="red-gradient">Diverse Realms</span> of
               Anime Magic
             </h1>
             <p className="max-w-md text-base text-white/70 sm:text-lg">
-              Search the catalog, filter by genre, and open any title for details
-              plus on-demand AI recommendations.
+              Search the catalog, filter by genre, and open any title for
+              details. AI recommendations stay opt-in.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <a
               href="#explore"
-              className="inline-flex items-center rounded-lg bg-gradient-to-r from-[#ff5956] to-[#ee1e38] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956] focus-visible:ring-offset-2 focus-visible:ring-offset-app"
+              className="inline-flex items-center rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               Start exploring
             </a>
             {featured ? (
               <Link
                 href={`/anime/${featured.id}`}
-                className="inline-flex items-center rounded-lg border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+                className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 Featured: {featured.name}
               </Link>
@@ -66,15 +66,15 @@ function Hero({ featured }: HeroProps) {
         </MotionDiv>
 
         <MotionDiv
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+          transition={{ duration: 0.5, delay: 0.08, ease: "easeOut" }}
           className="relative mx-auto w-full max-w-md"
         >
           {featured ? (
             <Link
               href={`/anime/${featured.id}`}
-              className="group relative block aspect-[3/4] overflow-hidden rounded-2xl bg-app-soft ring-1 ring-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+              className="group relative block aspect-[3/4] overflow-hidden rounded-[1.75rem] bg-white/10 shadow-soft ring-1 ring-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <Image
                 src={shikimoriImageUrl(featured.image?.original)}
@@ -84,13 +84,15 @@ function Hero({ featured }: HeroProps) {
                 sizes="(max-width: 1024px) 90vw, 420px"
                 className="object-cover transition duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 space-y-1 p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#ff8a87]">
                   Trending now
                 </p>
-                <p className="text-2xl font-bold text-white">{featured.name}</p>
-                <p className="text-sm text-white/60">
+                <p className="font-display text-2xl font-semibold text-white">
+                  {featured.name}
+                </p>
+                <p className="text-sm text-white/65">
                   {featured.kind ?? "Anime"}
                   {featured.score && featured.score !== "0.0"
                     ? ` · ${featured.score}`

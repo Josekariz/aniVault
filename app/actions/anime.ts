@@ -10,7 +10,8 @@ import {
 import type { FetchAnimeParams } from "@/types/anime";
 
 export async function fetchAnimeList(params: FetchAnimeParams = {}) {
-  return getAnimes(params);
+  const data = await getAnimes(params);
+  return Array.isArray(data) ? data : [];
 }
 
 export async function fetchAnimeDetail(id: string) {

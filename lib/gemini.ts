@@ -1,12 +1,21 @@
 import type { RecommendationItem } from "@/types/recommend";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+/**
+ * Prefer current free-tier friendly flash-lite models.
+ * Override with GEMINI_MODEL in env. We try fallbacks if the primary 404s.
+ * Docs: https://ai.google.dev/api/generate-content
+ */
+const DEFAULT_MODELS = [
+  process.env.GEMINI_MODEL,
+  "gemini-3.1-flash-lite",
+  "gemini-2.0-flash",
+].filter((value, index, arr): value is string => {
+  return Boolean(value) && arr.indexOf(value) === index;
+});
 
-/** Keep prompts and completions small — this feature is intentionally conservative. */
 const MAX_RECS = 3;
-const MAX_SYNOPSIS_CHARS = 180;
-const MAX_OUTPUT_TOKENS = 400;
+const MAX_SYNOPSIS_CHARS = 160;
+const MAX_OUTPUT_TOKENS = 350;
 
 export class GeminiError extends Error {
   code: "missing_key" | "rate_limit" | "upstream" | "invalid_response";
@@ -29,7 +38,6 @@ interface GeminiGenerateResponse {
     content?: {
       parts?: { text?: string }[];
     };
-    finishReason?: string;
   }[];
   error?: {
     code?: number;
@@ -60,24 +68,23 @@ export interface GeminiRecommendResult {
 
 function buildPrompt(input: GeminiRecommendInput): string {
   const genres =
-    input.genres.length > 0 ? input.genres.slice(0, 5).join(", ") : "unknown";
+    input.genres.length > 0 ? input.genres.slice(0, 4).join(", ") : "unknown";
   const synopsis = input.synopsis?.trim()
     ? input.synopsis.trim().slice(0, MAX_SYNOPSIS_CHARS)
     : "No synopsis provided.";
   const userAsk = input.message?.trim()
-    ? input.message.trim().slice(0, 160)
-    : "Suggest similar anime a fan would enjoy next.";
+    ? input.message.trim().slice(0, 140)
+    : "Suggest similar anime.";
 
   return [
     "Recommend anime. Be brief.",
-    `Return JSON with reply (1 short sentence) and exactly ${MAX_RECS} recommendations.`,
-    "Each recommendation needs title + one short reason.",
-    "Do not recommend the source title. Prefer well-known shows.",
+    `JSON with reply (1 short sentence) and exactly ${MAX_RECS} recommendations.`,
+    "Each item: title + one short reason. Do not recommend the source title.",
     "",
-    `Source title: ${input.name}`,
+    `Source: ${input.name}`,
     `Genres: ${genres}`,
-    `Synopsis excerpt: ${synopsis}`,
-    `User ask: ${userAsk}`,
+    `Synopsis: ${synopsis}`,
+    `Ask: ${userAsk}`,
   ].join("\n");
 }
 
@@ -109,9 +116,7 @@ function parseRecommendations(text: string): GeminiRecommendResult {
   }
 
   const payload = parsed as RawRecommendationPayload;
-  const list = Array.isArray(parsed)
-    ? parsed
-    : payload.recommendations;
+  const list = Array.isArray(parsed) ? parsed : payload.recommendations;
 
   if (!Array.isArray(list)) {
     throw new GeminiError(
@@ -142,31 +147,29 @@ function parseRecommendations(text: string): GeminiRecommendResult {
 
   const reply =
     typeof payload.reply === "string" && payload.reply.trim()
-      ? payload.reply.trim().slice(0, 200)
-      : `Here are ${recommendations.length} picks you might like.`;
+      ? payload.reply.trim().slice(0, 180)
+      : `Here are ${recommendations.length} picks.`;
 
   return { reply, recommendations };
 }
 
-export async function getGeminiRecommendations(
+async function callModel(
+  model: string,
+  apiKey: string,
   input: GeminiRecommendInput
 ): Promise<GeminiRecommendResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new GeminiError(
-      "GEMINI_API_KEY is not configured.",
-      "missing_key",
-      503
-    );
-  }
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
     body: JSON.stringify({
       contents: [{ parts: [{ text: buildPrompt(input) }] }],
       generationConfig: {
-        temperature: 0.45,
+        temperature: 0.4,
         maxOutputTokens: MAX_OUTPUT_TOKENS,
         responseMimeType: "application/json",
         responseSchema: {
@@ -210,4 +213,40 @@ export async function getGeminiRecommendations(
   }
 
   return parseRecommendations(extractText(payload));
+}
+
+export async function getGeminiRecommendations(
+  input: GeminiRecommendInput
+): Promise<GeminiRecommendResult> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new GeminiError(
+      "GEMINI_API_KEY is not configured on the server.",
+      "missing_key",
+      503
+    );
+  }
+
+  let lastError: GeminiError | null = null;
+
+  for (const model of DEFAULT_MODELS) {
+    try {
+      return await callModel(model, apiKey, input);
+    } catch (error) {
+      if (error instanceof GeminiError) {
+        lastError = error;
+        // Try next model on not-found / upstream; stop on missing key / rate limit.
+        if (error.code === "rate_limit" || error.code === "missing_key") {
+          throw error;
+        }
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw (
+    lastError ??
+    new GeminiError("No Gemini model succeeded.", "upstream", 502)
+  );
 }

@@ -17,6 +17,8 @@ export interface RecommendRequestBody {
    * Keep Gemini opt-in to conserve quota.
    */
   useGemini?: boolean;
+  /** Already-shown ids so "refresh" returns different catalog picks. */
+  excludeIds?: number[];
 }
 
 export interface RecommendSuccessResponse {

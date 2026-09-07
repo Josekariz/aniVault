@@ -8,6 +8,7 @@ import type {
 
 export const SHIKIMORI_ORIGIN = "https://shikimori.one";
 const API_BASE = `${SHIKIMORI_ORIGIN}/api`;
+const FETCH_TIMEOUT_MS = 8000;
 
 export class ShikimoriError extends Error {
   status: number;
@@ -32,25 +33,38 @@ function buildQuery(params: Record<string, string | number | undefined>) {
 }
 
 async function shikimoriFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "AniVault (https://github.com/local/anivault)",
-      ...init?.headers,
-    },
-    // List/detail data changes; avoid stale infinite-scroll pages.
-    next: { revalidate: 60 },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  if (!response.ok) {
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "AniVault",
+        ...init?.headers,
+      },
+      next: { revalidate: 120 },
+    });
+
+    if (!response.ok) {
+      throw new ShikimoriError(
+        `Shikimori request failed: ${response.status} ${response.statusText}`,
+        response.status
+      );
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof ShikimoriError) throw error;
     throw new ShikimoriError(
-      `Shikimori request failed: ${response.status} ${response.statusText}`,
-      response.status
+      error instanceof Error ? error.message : "Shikimori request failed",
+      504
     );
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json() as Promise<T>;
 }
 
 export function shikimoriImageUrl(path: string | null | undefined): string {
@@ -71,6 +85,7 @@ export async function getAnimes(
     kind,
     status,
     score,
+    exclude_ids,
   } = params;
 
   const query = buildQuery({
@@ -82,9 +97,11 @@ export async function getAnimes(
     kind,
     status,
     score,
+    exclude_ids,
   });
 
-  return shikimoriFetch<AnimeListItem[]>(`/animes${query}`);
+  const data = await shikimoriFetch<AnimeListItem[]>(`/animes${query}`);
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getAnimeById(id: string | number): Promise<AnimeDetail> {
@@ -94,16 +111,19 @@ export async function getAnimeById(id: string | number): Promise<AnimeDetail> {
 export async function getSimilarAnime(
   id: string | number
 ): Promise<AnimeListItem[]> {
-  return shikimoriFetch<AnimeListItem[]>(`/animes/${id}/similar`);
+  const data = await shikimoriFetch<AnimeListItem[]>(`/animes/${id}/similar`);
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getRelatedAnime(
   id: string | number
 ): Promise<AnimeRelated[]> {
-  return shikimoriFetch<AnimeRelated[]>(`/animes/${id}/related`);
+  const data = await shikimoriFetch<AnimeRelated[]>(`/animes/${id}/related`);
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getGenres(): Promise<Genre[]> {
   const genres = await shikimoriFetch<Genre[]>("/genres");
+  if (!Array.isArray(genres)) return [];
   return genres.filter((genre) => genre.kind === "anime");
 }

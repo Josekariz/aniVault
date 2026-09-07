@@ -82,11 +82,11 @@ function LoadMore({
       <section className="flex w-full flex-col items-center justify-center gap-3 py-6">
         {error ? (
           <div className="flex flex-col items-center gap-3 text-center">
-            <p className="text-sm text-white/70">{error}</p>
+            <p className="text-sm text-ink-muted">{error}</p>
             <button
               type="button"
               onClick={() => void loadNext()}
-              className="rounded-lg bg-[#161921] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#1f2430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5956]"
+              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm ring-1 ring-ink/10 transition hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Retry
             </button>
@@ -100,7 +100,7 @@ function LoadMore({
         ) : null}
 
         {!hasMore && !error ? (
-          <p className="text-sm text-white/40">You&apos;ve reached the end.</p>
+          <p className="text-sm text-ink-subtle">You&apos;ve reached the end.</p>
         ) : null}
       </section>
     </>

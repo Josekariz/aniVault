@@ -24,17 +24,17 @@ function AnimeCard({ anime, index }: Prop) {
       initial="hidden"
       animate="visible"
       transition={{
-        delay: Math.min(index * 0.08, 0.4),
+        delay: Math.min(index * 0.06, 0.3),
         ease: "easeOut",
-        duration: 0.35,
+        duration: 0.3,
       }}
       className="group w-full"
     >
       <Link
         href={`/anime/${anime.id}`}
-        className="block w-full rounded-xl outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-[#ff5956] focus-visible:ring-offset-2 focus-visible:ring-offset-app"
+        className="block w-full rounded-2xl outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       >
-        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-app-soft">
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-surface-2 shadow-soft">
           <Image
             src={shikimoriImageUrl(anime.image?.original)}
             alt={anime.name}
@@ -42,26 +42,26 @@ function AnimeCard({ anime, index }: Prop) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition duration-300 group-hover:scale-[1.03]"
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
           {anime.kind ? (
-            <span className="absolute right-3 top-3 rounded-md bg-black/70 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink backdrop-blur-sm">
               {anime.kind}
             </span>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-2 py-4">
-          <h2 className="line-clamp-2 text-lg font-semibold text-white transition group-hover:text-[#ff8a87]">
+          <h2 className="font-display line-clamp-2 text-lg font-semibold text-ink transition group-hover:text-accent">
             {anime.name}
           </h2>
-          <div className="flex items-center gap-4 text-sm text-white/80">
+          <div className="flex items-center gap-4 text-sm text-ink-muted">
             <div className="flex items-center gap-1.5">
               <Image
                 src="/episodes.svg"
                 alt=""
                 width={18}
                 height={18}
-                className="object-contain opacity-80"
+                className="object-contain opacity-70"
               />
               <span className="font-medium">{episodeCount}</span>
             </div>
@@ -73,7 +73,7 @@ function AnimeCard({ anime, index }: Prop) {
                 height={16}
                 className="object-contain"
               />
-              <span className="font-medium text-[#FFAD49]">
+              <span className="font-medium text-score">
                 {anime.score && anime.score !== "0.0" ? anime.score : "N/A"}
               </span>
             </div>
