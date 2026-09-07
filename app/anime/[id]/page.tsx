@@ -101,7 +101,7 @@ async function RelatedBlock({ id }: { id: string }) {
     return (
       <div
         role="alert"
-        className="rounded-2xl border border-amber-500/30 bg-amber-50 px-5 py-4 text-sm text-amber-900"
+        className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"
       >
         Related titles couldn&apos;t be loaded right now.
       </div>

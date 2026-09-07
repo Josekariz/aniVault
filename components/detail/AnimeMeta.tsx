@@ -14,7 +14,7 @@ function MetaCard({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-ink/8 bg-white px-4 py-3 shadow-sm">
+    <div className="rounded-2xl border border-white/10 bg-surface px-4 py-3 shadow-sm">
       <dt className="text-xs uppercase tracking-wide text-ink-subtle">{label}</dt>
       <dd
         className={`mt-1 text-lg font-semibold ${

@@ -3,20 +3,20 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --bg: #f3f5f8;
-  --surface: #ffffff;
-  --accent: #e11d38;
-  --ink: #141820;
+  color-scheme: dark;
+  --bg: #0f1117;
+  --surface: #161921;
+  --accent: #ff5956;
+  --ink: #f3f5f9;
 }
 
 body {
-  background-color: #e9edf3;
+  background-color: #000;
   color: var(--ink);
 }
 
 .red-gradient {
-  background: linear-gradient(92deg, #ff5956 2.87%, #e11d38 96.18%);
+  background: linear-gradient(92deg, #ff5956 2.87%, #ee1e38 96.18%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

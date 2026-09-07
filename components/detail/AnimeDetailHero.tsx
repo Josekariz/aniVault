@@ -65,7 +65,7 @@ export default function AnimeDetailHero({ anime }: AnimeDetailHeroProps) {
               <li key={genre.id}>
                 <Link
                   href={`/?genre=${genre.id}`}
-                  className="inline-flex rounded-full border border-ink/10 bg-white px-3 py-1 text-sm text-ink-muted transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="inline-flex rounded-full border border-white/10 bg-surface px-3 py-1 text-sm text-ink-muted transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   {genre.name}
                 </Link>

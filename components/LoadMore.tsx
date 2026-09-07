@@ -86,7 +86,7 @@ function LoadMore({
             <button
               type="button"
               onClick={() => void loadNext()}
-              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm ring-1 ring-ink/10 transition hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="rounded-full bg-surface px-4 py-2 text-sm font-medium text-ink shadow-sm ring-1 ring-white/10 transition hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Retry
             </button>

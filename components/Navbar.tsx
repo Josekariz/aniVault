@@ -136,7 +136,7 @@ function SearchField() {
           onBlur={() => {
             blurRef.current = setTimeout(() => setOpen(false), 150);
           }}
-          className="w-full rounded-full border border-ink/10 bg-white py-2.5 pl-4 pr-10 text-sm text-ink shadow-sm placeholder:text-ink-subtle transition hover:border-ink/20 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="w-full rounded-full border border-white/10 bg-surface py-2.5 pl-4 pr-10 text-sm text-ink shadow-sm placeholder:text-ink-subtle transition hover:border-white/20 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
         {isPending ? (
           <span
@@ -151,7 +151,7 @@ function SearchField() {
       </form>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-xl shadow-ink/10">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-white/10 bg-surface-2 shadow-xl shadow-black/40">
           {suggestError ? (
             <p className="px-4 py-3 text-sm text-ink-muted">
               Search failed. Press Enter to search the catalog.

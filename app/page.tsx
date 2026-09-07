@@ -76,9 +76,9 @@ export default async function Home({ searchParams }: HomeProps) {
         {loadError ? (
           <div
             role="alert"
-            className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center"
+            className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-8 text-center"
           >
-            <p className="font-medium text-red-700">{loadError}</p>
+            <p className="font-medium text-red-200">{loadError}</p>
           </div>
         ) : (
           <>

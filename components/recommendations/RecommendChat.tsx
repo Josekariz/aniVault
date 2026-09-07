@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Spinner } from "@/components/AnimeSkeleton";
 import type {
@@ -26,7 +33,51 @@ type ChatMessage =
       items: RecommendationItem[];
     };
 
-function RecCards({ items }: { items: RecommendationItem[] }) {
+interface StoredChat {
+  open: boolean;
+  messages: ChatMessage[];
+  shownIds: number[];
+  geminiUsedByAnime: Record<string, boolean>;
+  lastAnimeId: number;
+  lastAnimeName: string;
+}
+
+const STORAGE_KEY = "anivault-recommend-chat-v1";
+
+function readStore(): StoredChat | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredChat;
+  } catch {
+    return null;
+  }
+}
+
+function writeStore(value: StoredChat) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function welcomeMessage(name: string): ChatMessage {
+  return {
+    id: "welcome",
+    role: "assistant",
+    text: `Ask for picks related to ${name}. Free catalog refresh anytime — Gemini is optional (1× per title).`,
+  };
+}
+
+function RecCards({
+  items,
+  onNavigate,
+}: {
+  items: RecommendationItem[];
+  onNavigate: () => void;
+}) {
   return (
     <ul className="space-y-2">
       {items.map((item, index) => {
@@ -49,12 +100,13 @@ function RecCards({ items }: { items: RecommendationItem[] }) {
             {href ? (
               <Link
                 href={href}
-                className="block rounded-xl border border-ink/10 bg-white px-3 py-2 transition hover:border-accent/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                onClick={onNavigate}
+                className="block rounded-xl border border-white/10 bg-surface-2 px-3 py-2 transition hover:border-accent/40 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {inner}
               </Link>
             ) : (
-              <div className="rounded-xl border border-ink/10 bg-white px-3 py-2">
+              <div className="rounded-xl border border-white/10 bg-surface-2 px-3 py-2">
                 {inner}
               </div>
             )}
@@ -71,20 +123,77 @@ export default function RecommendChat({
   genres,
   synopsis,
 }: RecommendChatProps) {
+  const hydrated = useRef(false);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [geminiUsed, setGeminiUsed] = useState(false);
+  const [geminiUsedByAnime, setGeminiUsedByAnime] = useState<
+    Record<string, boolean>
+  >({});
   const [shownIds, setShownIds] = useState<number[]>([animeId]);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: `Ask for picks related to ${name}. Free catalog refresh anytime — Gemini is optional (1×).`,
-    },
+    welcomeMessage(name),
   ]);
 
+  const geminiUsed = Boolean(geminiUsedByAnime[String(animeId)]);
   const genresKey = useMemo(() => JSON.stringify(genres), [genres]);
+
+  const persist = useCallback(
+    (next: Partial<StoredChat> & { messages?: ChatMessage[] }) => {
+      const payload: StoredChat = {
+        open: next.open ?? open,
+        messages: next.messages ?? messages,
+        shownIds: next.shownIds ?? shownIds,
+        geminiUsedByAnime: next.geminiUsedByAnime ?? geminiUsedByAnime,
+        lastAnimeId: animeId,
+        lastAnimeName: name,
+      };
+      writeStore(payload);
+    },
+    [animeId, geminiUsedByAnime, messages, name, open, shownIds]
+  );
+
+  // Restore chat so clicking a recommendation doesn't wipe the bubble.
+  useEffect(() => {
+    const stored = readStore();
+    if (!stored?.messages?.length) {
+      hydrated.current = true;
+      return;
+    }
+
+    const nextMessages = [...stored.messages];
+    if (
+      stored.lastAnimeId !== animeId &&
+      !nextMessages.some((message) => message.id.startsWith(`nav-${animeId}-`))
+    ) {
+      nextMessages.push({
+        id: `nav-${animeId}-${Date.now()}`,
+        role: "assistant",
+        text: `Now viewing ${name}. Your previous recommendations are still above — ask again anytime for this title.`,
+      });
+    }
+
+    setMessages(nextMessages);
+    setShownIds(
+      Array.isArray(stored.shownIds) && stored.shownIds.length
+        ? Array.from(new Set([...stored.shownIds, animeId]))
+        : [animeId]
+    );
+    setGeminiUsedByAnime(stored.geminiUsedByAnime ?? {});
+    // Keep the panel open when coming from a recommendation click.
+    setOpen(stored.open || stored.messages.some((m) => m.role === "recs"));
+    hydrated.current = true;
+  }, [animeId, name]);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    persist({ open, messages, shownIds, geminiUsedByAnime });
+  }, [open, messages, shownIds, geminiUsedByAnime, persist]);
+
+  const keepChatOpen = useCallback(() => {
+    setOpen(true);
+    persist({ open: true });
+  }, [persist]);
 
   async function requestRecommendations(options: {
     useGemini: boolean;
@@ -138,7 +247,12 @@ export default function RecommendChat({
         return;
       }
 
-      if (payload.source === "gemini") setGeminiUsed(true);
+      if (payload.source === "gemini") {
+        setGeminiUsedByAnime((prev) => ({
+          ...prev,
+          [String(animeId)]: true,
+        }));
+      }
 
       const nextIds = payload.recommendations
         .map((item) => item.shikimoriId)
@@ -163,6 +277,7 @@ export default function RecommendChat({
           items: payload.recommendations,
         },
       ]);
+      setOpen(true);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -192,12 +307,12 @@ export default function RecommendChat({
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 sm:bottom-8 sm:right-8">
       {open ? (
-        <div className="flex h-[min(32rem,70vh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-ink/10 bg-canvas shadow-2xl shadow-ink/15">
-          <header className="flex items-center justify-between border-b border-ink/8 bg-white px-4 py-3">
+        <div className="flex h-[min(32rem,70vh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-white/10 bg-surface shadow-2xl shadow-black/50">
+          <header className="flex items-center justify-between border-b border-white/10 bg-surface-2 px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-ink">Ask AniVault</p>
               <p className="text-[11px] text-ink-subtle">
-                Catalog free · Gemini on demand (1×)
+                Stays open when you open a recommendation
               </p>
             </div>
             <button
@@ -220,7 +335,7 @@ export default function RecommendChat({
                         ? "Gemini picks"
                         : "Catalog picks"}
                     </p>
-                    <RecCards items={message.items} />
+                    <RecCards items={message.items} onNavigate={keepChatOpen} />
                   </div>
                 );
               }
@@ -235,7 +350,7 @@ export default function RecommendChat({
                     className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                       isUser
                         ? "rounded-br-md bg-accent text-white"
-                        : "rounded-bl-md bg-white text-ink-muted shadow-sm ring-1 ring-ink/5"
+                        : "rounded-bl-md bg-surface-2 text-ink-muted ring-1 ring-white/10"
                     }`}
                   >
                     {message.text}
@@ -251,7 +366,7 @@ export default function RecommendChat({
             ) : null}
           </div>
 
-          <div className="space-y-2 border-t border-ink/8 bg-white p-3">
+          <div className="space-y-2 border-t border-white/10 bg-surface-2 p-3">
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -259,7 +374,7 @@ export default function RecommendChat({
                 onClick={() =>
                   void requestRecommendations({ useGemini: false })
                 }
-                className="rounded-full border border-ink/10 bg-surface px-3 py-1 text-xs font-medium text-ink-muted transition hover:bg-surface-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs font-medium text-ink-muted transition hover:bg-canvas disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Refresh free picks
               </button>
@@ -280,7 +395,7 @@ export default function RecommendChat({
                     message: "Suggest 3 similar anime",
                   });
                 }}
-                className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent transition hover:bg-accent/15 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="rounded-full border border-accent/40 bg-accent/15 px-3 py-1 text-xs font-medium text-[#ffb0ae] transition hover:bg-accent/25 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 Ask Gemini (1×)
               </button>
@@ -300,7 +415,7 @@ export default function RecommendChat({
                     : "e.g. darker tone…"
                 }
                 disabled={loading || geminiUsed}
-                className="min-w-0 flex-1 rounded-xl border border-ink/10 bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-subtle focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/25 disabled:opacity-50"
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-subtle focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/25 disabled:opacity-50"
               />
               <button
                 type="submit"

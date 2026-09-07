@@ -12,7 +12,7 @@ export default function AnimeGrid({
 }: AnimeGridProps) {
   if (!Array.isArray(anime) || anime.length === 0) {
     return (
-      <p className="rounded-2xl border border-ink/10 bg-white px-6 py-10 text-center text-ink-muted shadow-sm">
+      <p className="rounded-2xl border border-white/10 bg-surface px-6 py-10 text-center text-ink-muted shadow-sm">
         {emptyMessage}
       </p>
     );

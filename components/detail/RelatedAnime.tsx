@@ -37,7 +37,7 @@ export default function RelatedAnime({ related, similar }: RelatedAnimeProps) {
               <li key={`${entry.relation}-${entry.anime.id}`}>
                 <Link
                   href={`/anime/${entry.anime.id}`}
-                  className="group flex gap-4 rounded-2xl border border-ink/8 bg-white p-3 shadow-sm transition hover:border-accent/35 hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="group flex gap-4 rounded-2xl border border-white/10 bg-surface p-3 shadow-sm transition hover:border-accent/35 hover:shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   <span className="relative h-24 w-16 shrink-0 overflow-hidden rounded-xl bg-surface-2">
                     <Image

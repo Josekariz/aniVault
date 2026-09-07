@@ -33,7 +33,7 @@ function GenreFilterInner({ genres }: GenreFilterProps) {
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
       isActive
         ? "border-transparent bg-accent text-white"
-        : "border-ink/10 bg-white text-ink-muted hover:border-ink/20 hover:text-ink",
+        : "border-white/10 bg-surface text-ink-muted hover:border-white/20 hover:text-ink",
     ].join(" ");
 
   return (
